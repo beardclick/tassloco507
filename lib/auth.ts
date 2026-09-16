@@ -17,8 +17,8 @@ export function verifyCredentials(user: string, password: string): boolean {
   return safeEqual(user, ADMIN_USER) && safeEqual(password, ADMIN_PASSWORD);
 }
 
-export function signToken(): string {
-  const payload = `${ADMIN_USER}:${Date.now()}`;
+export function signToken(identity = ADMIN_USER): string {
+  const payload = `${identity}:${Date.now()}`;
   const sig = createHmac('sha256', SECRET).update(payload).digest('hex');
   return `${payload}.${sig}`;
 }
@@ -37,5 +37,5 @@ export function verifyToken(token: string | undefined | null): boolean {
   const expected = createHmac('sha256', SECRET).update(payload).digest('hex');
   if (!safeEqual(sig, expected)) return false;
   const [user] = payload.split(':');
-  return user === ADMIN_USER;
+  return Boolean(user);
 }

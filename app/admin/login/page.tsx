@@ -43,12 +43,14 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="user">Usuario</label>
+          <label htmlFor="user">Correo o usuario</label>
           <input
             id="user"
             value={user}
             onChange={(e) => setUser(e.target.value)}
             autoComplete="username"
+            type="text"
+            inputMode="email"
             required
           />
         </div>

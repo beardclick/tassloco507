@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { AUTH_COOKIE, signToken, verifyCredentials } from '@/lib/auth';
+import { getSupabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
   let body: Record<string, unknown> = {};
@@ -11,7 +12,24 @@ export async function POST(req: Request) {
   const user = String(body.user ?? '');
   const password = String(body.password ?? '');
 
-  if (!verifyCredentials(user, password)) {
+  let authenticated = verifyCredentials(user, password);
+  let identity = user;
+
+  // También permite entrar con un usuario confirmado de Supabase Auth.
+  if (!authenticated && user.includes('@') && password) {
+    try {
+      const { data, error } = await getSupabase().auth.signInWithPassword({
+        email: user.toLowerCase(),
+        password,
+      });
+      authenticated = Boolean(data.user && !error);
+      if (authenticated) identity = data.user!.email ?? user;
+    } catch {
+      authenticated = false;
+    }
+  }
+
+  if (!authenticated) {
     return NextResponse.json(
       { ok: false, error: 'Usuario o contraseña incorrectos' },
       { status: 401 },
@@ -19,7 +37,7 @@ export async function POST(req: Request) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(AUTH_COOKIE, signToken(), {
+  res.cookies.set(AUTH_COOKIE, signToken(identity), {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
