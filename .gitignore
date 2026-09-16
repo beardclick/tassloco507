@@ -1,0 +1,28 @@
+# dependencies
+node_modules
+
+# next.js
+.next
+out
+dist
+*.tsbuildinfo
+next-env.d.ts
+
+# env
+.env
+.env.local
+.env.*.local
+
+# local data / uploads (ephemeral — will move to a hosted DB + Blob on Vercel)
+data/db.json
+public/uploads
+
+# vercel
+.vercel
+
+# npm cache
+.npm-cache
+
+# logs / misc
+*.log
+.DS_Store

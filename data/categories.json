@@ -1,0 +1,202 @@
+[
+ {
+  "id": 110,
+  "name": "Accesorios",
+  "slug": "accesorios",
+  "parent": 0,
+  "count": 5,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/accesorios/",
+  "image": "https://tassloco507.com/wp-content/uploads/2020/07/maletin.jpeg"
+ },
+ {
+  "id": 186,
+  "name": "Accesorios Auto",
+  "slug": "accesorios-auto",
+  "parent": 115,
+  "count": 126,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/accesorios-auto/",
+  "image": null
+ },
+ {
+  "id": 115,
+  "name": "Auto Parts",
+  "slug": "auto-parts",
+  "parent": 0,
+  "count": 262,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/",
+  "image": "https://tassloco507.com/wp-content/uploads/2020/07/rin-imagen.jpeg"
+ },
+ {
+  "id": 189,
+  "name": "Difusores",
+  "slug": "difusores",
+  "parent": 115,
+  "count": 8,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/difusores/",
+  "image": null
+ },
+ {
+  "id": 105,
+  "name": "Gorras",
+  "slug": "gorras",
+  "parent": 104,
+  "count": 11,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/gorras-snapbacks/gorras/",
+  "image": null
+ },
+ {
+  "id": 104,
+  "name": "Gorras/Snapbacks",
+  "slug": "gorras-snapbacks",
+  "parent": 0,
+  "count": 24,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/gorras-snapbacks/",
+  "image": "https://tassloco507.com/wp-content/uploads/2020/07/snp-malla-negro-rojo.jpeg"
+ },
+ {
+  "id": 178,
+  "name": "Jackets",
+  "slug": "jackets",
+  "parent": 101,
+  "count": 1,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/sueter/jackets/",
+  "image": null
+ },
+ {
+  "id": 113,
+  "name": "Lanyards",
+  "slug": "lanyards",
+  "parent": 110,
+  "count": 1,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/accesorios/lanyards/",
+  "image": null
+ },
+ {
+  "id": 120,
+  "name": "Lip",
+  "slug": "lip-auto-parts",
+  "parent": 115,
+  "count": 45,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/lip-auto-parts/",
+  "image": null
+ },
+ {
+  "id": 179,
+  "name": "Partes",
+  "slug": "partes",
+  "parent": 115,
+  "count": 57,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/partes/",
+  "image": null
+ },
+ {
+  "id": 109,
+  "name": "Pasa Montañas",
+  "slug": "pasa-montanas",
+  "parent": 0,
+  "count": 6,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/pasa-montanas/",
+  "image": "https://tassloco507.com/wp-content/uploads/2020/06/beanie-negro-grs.jpeg"
+ },
+ {
+  "id": 185,
+  "name": "Pedido Especial",
+  "slug": "pedido-especial",
+  "parent": 0,
+  "count": 20,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/pedido-especial/",
+  "image": null
+ },
+ {
+  "id": 173,
+  "name": "Piezas",
+  "slug": "piezas",
+  "parent": 115,
+  "count": 8,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/piezas/",
+  "image": null
+ },
+ {
+  "id": 118,
+  "name": "Side Skirts",
+  "slug": "side-skirts",
+  "parent": 115,
+  "count": 14,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/side-skirts/",
+  "image": null
+ },
+ {
+  "id": 108,
+  "name": "Snapback Doblada",
+  "slug": "snapback-doblada",
+  "parent": 104,
+  "count": 5,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/gorras-snapbacks/snapback-doblada/",
+  "image": null
+ },
+ {
+  "id": 107,
+  "name": "Snapback Malla",
+  "slug": "snapback-malla",
+  "parent": 104,
+  "count": 8,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/gorras-snapbacks/snapback-malla/",
+  "image": null
+ },
+ {
+  "id": 106,
+  "name": "Snapback Tela",
+  "slug": "snapback-tela",
+  "parent": 104,
+  "count": 5,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/gorras-snapbacks/snapback-tela/",
+  "image": null
+ },
+ {
+  "id": 112,
+  "name": "Stickers",
+  "slug": "stickers",
+  "parent": 110,
+  "count": 3,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/accesorios/stickers/",
+  "image": null
+ },
+ {
+  "id": 101,
+  "name": "Suéter",
+  "slug": "sueter",
+  "parent": 0,
+  "count": 5,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/sueter/",
+  "image": "https://tassloco507.com/wp-content/uploads/2020/06/sueter-panda.jpeg"
+ },
+ {
+  "id": 116,
+  "name": "Tuercas",
+  "slug": "tuercas",
+  "parent": 115,
+  "count": 4,
+  "description": "",
+  "link": "https://tassloco507.com/categoria-producto/auto-parts/tuercas/",
+  "image": null
+ }
+]
