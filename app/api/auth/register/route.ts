@@ -20,11 +20,11 @@ export async function POST(req: Request) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return NextResponse.json({ ok: false, error: 'Correo no válido' }, { status: 400 });
   }
-  if (getCustomerByEmail(email)) {
+  if (await getCustomerByEmail(email)) {
     return NextResponse.json({ ok: false, error: 'Ya existe una cuenta con ese correo' }, { status: 400 });
   }
 
-  const customer = createCustomer({
+  const customer = await createCustomer({
     nombre,
     apellido,
     email,

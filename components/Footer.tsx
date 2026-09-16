@@ -3,8 +3,8 @@ import { categoryTree } from '@/lib/catalog';
 import { SITE } from '@/lib/site';
 import { InstagramIcon, MailIcon, WhatsappIcon, YoutubeIcon } from './Icons';
 
-export function Footer() {
-  const roots = categoryTree();
+export async function Footer() {
+  const roots = await categoryTree();
   const year = new Date().getFullYear();
 
   return (

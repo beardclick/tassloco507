@@ -11,7 +11,7 @@ export async function PUT(
   }
   const { id } = await params;
   const body = await req.json();
-  const updated = updateCategory(Number(id), {
+  const updated = await updateCategory(Number(id), {
     name: String(body.name ?? '').trim(),
     parent: body.parent ? Number(body.parent) : 0,
     description: String(body.description ?? '').trim(),
@@ -31,7 +31,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const { id } = await params;
-  const ok = deleteCategory(Number(id));
+  const ok = await deleteCategory(Number(id));
   if (!ok) {
     return NextResponse.json({ error: 'Categoría no encontrada' }, { status: 404 });
   }

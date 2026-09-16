@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
   const subtotal = Number(body.subtotal ?? items.reduce((n, i) => n + i.price * i.qty, 0));
 
-  const order = createOrder({
+  const order = await createOrder({
     status: 'pendiente',
     customer: {
       nombre: String(body.customer?.nombre ?? ''),

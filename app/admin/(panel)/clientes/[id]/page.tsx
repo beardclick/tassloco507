@@ -11,7 +11,7 @@ export default async function EditarClientePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const customer = getCustomerById(Number(id));
+  const customer = await getCustomerById(Number(id));
   if (!customer) notFound();
 
   return (

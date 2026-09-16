@@ -15,7 +15,7 @@ export async function PATCH(
   if (!ORDER_STATUSES.some((s) => s.value === status)) {
     return NextResponse.json({ error: 'Estado inválido' }, { status: 400 });
   }
-  const updated = updateOrderStatus(id, status);
+  const updated = await updateOrderStatus(id, status);
   if (!updated) {
     return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
   }
@@ -46,7 +46,7 @@ export async function PUT(
   }));
   const subtotal = items.reduce((n, i) => n + i.price * i.qty, 0);
 
-  const updated = updateOrder(id, {
+  const updated = await updateOrder(id, {
     status,
     customer: {
       nombre: String(body.customer?.nombre ?? ''),

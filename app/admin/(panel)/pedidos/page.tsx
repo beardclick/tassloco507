@@ -5,8 +5,8 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 
 export const dynamic = 'force-dynamic';
 
-export default function AdminPedidos() {
-  const orders = getOrders();
+export default async function AdminPedidos() {
+  const orders = await getOrders();
 
   return (
     <div>

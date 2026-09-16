@@ -31,11 +31,11 @@ export default async function ShopPage({
   const catSlug = (params.cat ?? '').trim();
   const sort = params.sort ?? 'newest';
 
-  let products = q ? searchProducts(q) : loadProducts();
+  let products = q ? await searchProducts(q) : await loadProducts();
 
-  const activeCat = catSlug ? (getCategoryBySlug(catSlug) ?? null) : null;
+  const activeCat = catSlug ? ((await getCategoryBySlug(catSlug)) ?? null) : null;
   if (activeCat) {
-    const ids = new Set(categorySubtreeIds(activeCat));
+    const ids = new Set(await categorySubtreeIds(activeCat));
     products = products.filter((p) => p.categories.some((c) => ids.has(c.id)));
   }
 
@@ -49,7 +49,7 @@ export default async function ShopPage({
     products = [...products].sort((a, b) => b.id - a.id);
   }
 
-  const roots = categoryTree();
+  const roots = await categoryTree();
 
   return (
     <>

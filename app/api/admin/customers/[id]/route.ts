@@ -17,12 +17,12 @@ export async function PUT(
   if (!nombre || !email) {
     return NextResponse.json({ error: 'Nombre y correo son obligatorios' }, { status: 400 });
   }
-  const existing = getCustomerByEmail(email);
+  const existing = await getCustomerByEmail(email);
   if (existing && existing.id !== Number(id)) {
     return NextResponse.json({ error: 'Ya existe otro cliente con ese correo' }, { status: 400 });
   }
   const password = String(body.password ?? '');
-  const updated = updateCustomer(Number(id), {
+  const updated = await updateCustomer(Number(id), {
     nombre,
     apellido: String(body.apellido ?? '').trim(),
     email,
@@ -45,7 +45,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const { id } = await params;
-  const ok = deleteCustomer(Number(id));
+  const ok = await deleteCustomer(Number(id));
   if (!ok) {
     return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });
   }

@@ -6,8 +6,16 @@ import { DeleteCategoryButton } from '@/components/admin/DeleteCategoryButton';
 
 export const dynamic = 'force-dynamic';
 
-export default function AdminCategorias() {
-  const cats = flattenCategories();
+export default async function AdminCategorias() {
+  const options = await flattenCategories();
+  const cats = await Promise.all(
+    options.map(async (c) => {
+      const cat = await getCategoryById(c.id);
+      const count = cat ? await getCategoryProductCount(cat) : 0;
+      const parentName = cat?.parent ? (await getCategoryById(cat.parent))?.name : undefined;
+      return { ...c, count, parentName };
+    }),
+  );
 
   return (
     <div>
@@ -34,26 +42,21 @@ export default function AdminCategorias() {
               </tr>
             </thead>
             <tbody>
-              {cats.map((c) => {
-                const cat = getCategoryById(c.id)!;
-                return (
-                  <tr key={c.id}>
-                    <td style={{ paddingLeft: 12 + c.depth * 18 }}>
-                      <strong>{c.name}</strong>
-                    </td>
-                    <td className="admin-muted">
-                      {cat.parent ? getCategoryById(cat.parent)?.name ?? '—' : '—'}
-                    </td>
-                    <td>{getCategoryProductCount(cat)}</td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <Link href={`/admin/categorias/${c.id}`} className="admin-link">
-                        Editar
-                      </Link>{' '}
-                      <DeleteCategoryButton id={c.id} />
-                    </td>
-                  </tr>
-                );
-              })}
+              {cats.map((c) => (
+                <tr key={c.id}>
+                  <td style={{ paddingLeft: 12 + c.depth * 18 }}>
+                    <strong>{c.name}</strong>
+                  </td>
+                  <td className="admin-muted">{c.parentName ?? '—'}</td>
+                  <td>{c.count}</td>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <Link href={`/admin/categorias/${c.id}`} className="admin-link">
+                      Editar
+                    </Link>{' '}
+                    <DeleteCategoryButton id={c.id} />
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

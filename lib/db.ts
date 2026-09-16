@@ -1,15 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
+import { getSupabase } from './supabase';
 import type { Category, Product, ProductCategory, Prices } from './catalog';
 import type { OrderStatus } from './order';
 
 export type { OrderStatus };
 export { ORDER_STATUSES } from './order';
-
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_PATH = path.join(DATA_DIR, 'db.json');
-const SEED_PRODUCTS = path.join(DATA_DIR, 'products.json');
-const SEED_CATEGORIES = path.join(DATA_DIR, 'categories.json');
 
 export interface OrderItem {
   slug: string;
@@ -76,45 +70,11 @@ export interface CategoryInput {
   image?: string | null;
 }
 
-interface DbShape {
-  products: Product[];
-  categories: Category[];
-  orders: Order[];
-  customers: Customer[];
-}
+const sb = () => getSupabase();
 
-let cache: DbShape | null = null;
-
-function ensureSeed(): void {
-  if (existsSync(DB_PATH)) return;
-  mkdirSync(DATA_DIR, { recursive: true });
-  const products = JSON.parse(readFileSync(SEED_PRODUCTS, 'utf8')) as Product[];
-  const categories = JSON.parse(readFileSync(SEED_CATEGORIES, 'utf8')) as Category[];
-  writeDb({ products, categories, orders: [], customers: [] });
-}
-
-function readDb(): DbShape {
-  ensureSeed();
-  if (!cache) {
-    const raw = JSON.parse(readFileSync(DB_PATH, 'utf8')) as Partial<DbShape>;
-    const migrated: DbShape = {
-      products: Array.isArray(raw.products) ? raw.products : [],
-      categories: Array.isArray(raw.categories)
-        ? raw.categories
-        : (JSON.parse(readFileSync(SEED_CATEGORIES, 'utf8')) as Category[]),
-      orders: Array.isArray(raw.orders) ? raw.orders : [],
-      customers: Array.isArray(raw.customers) ? raw.customers : [],
-    };
-    cache = migrated;
-    writeFileSync(DB_PATH, JSON.stringify(migrated, null, 1), 'utf8');
-  }
-  return cache;
-}
-
-function writeDb(db: DbShape): void {
-  mkdirSync(DATA_DIR, { recursive: true });
-  writeFileSync(DB_PATH, JSON.stringify(db, null, 1), 'utf8');
-  cache = db;
+function num(v: unknown): number {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
 }
 
 export function slugify(input: string): string {
@@ -149,6 +109,50 @@ function buildImages(urls: string[] | undefined, alt: string): { src: string; th
   return (urls ?? []).filter(Boolean).map((src) => ({ src, thumbnail: src, alt }));
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function rowToOrder(row: any): Order {
+  return {
+    id: row.id,
+    number: row.number,
+    createdAt: row.created_at,
+    status: row.status,
+    customer: row.customer ?? {},
+    delivery: row.delivery ?? {},
+    payment: row.payment ?? {},
+    items: row.items ?? [],
+    subtotal: num(row.subtotal),
+    total: num(row.total),
+  };
+}
+
+function orderToRow(order: Order): Record<string, unknown> {
+  return {
+    id: order.id,
+    number: order.number,
+    created_at: order.createdAt,
+    status: order.status,
+    customer: order.customer,
+    delivery: order.delivery,
+    payment: order.payment,
+    items: order.items,
+    subtotal: order.subtotal,
+    total: order.total,
+  };
+}
+
+function rowToCustomer(row: any): Customer {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    apellido: row.apellido,
+    email: row.email,
+    telefono: row.telefono,
+    passwordHash: row.password_hash,
+    createdAt: row.created_at,
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 // ---- Categories ----
 
 function buildCategoryLink(slug: string, parentId: number, cats: Category[]): string {
@@ -171,17 +175,21 @@ function recomputeLinks(cats: Category[]): Category[] {
   return cats.map((c) => ({ ...c, link: buildCategoryLink(c.slug, c.parent, cats) }));
 }
 
-export function getCategories(): Category[] {
-  return readDb().categories;
+export async function getCategories(): Promise<Category[]> {
+  const { data, error } = await sb().from('categories').select('*').order('id', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Category[];
 }
 
-export function getCategoryById(id: number): Category | undefined {
-  return readDb().categories.find((c) => c.id === id);
+export async function getCategoryById(id: number): Promise<Category | undefined> {
+  const { data, error } = await sb().from('categories').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return (data as Category) ?? undefined;
 }
 
-export function createCategory(input: CategoryInput): Category {
-  const db = readDb();
-  const id = db.categories.reduce((m, c) => Math.max(m, c.id), 0) + 1;
+export async function createCategory(input: CategoryInput): Promise<Category> {
+  const all = await getCategories();
+  const id = all.reduce((m, c) => Math.max(m, c.id), 0) + 1;
   const slug = slugify(input.name) || `categoria-${id}`;
   const cat: Category = {
     id,
@@ -190,64 +198,90 @@ export function createCategory(input: CategoryInput): Category {
     parent: input.parent ?? 0,
     count: 0,
     description: input.description ?? '',
-    link: buildCategoryLink(slug, input.parent ?? 0, db.categories),
+    link: buildCategoryLink(slug, input.parent ?? 0, all),
     image: input.image ?? null,
   };
-  db.categories = recomputeLinks([...db.categories, cat]);
-  writeDb(db);
+  const { error } = await sb().from('categories').insert(cat);
+  if (error) throw error;
+  // Recompute links of the whole set (parent may have changed).
+  await persistCategoryLinks(recomputeLinks([...all, cat]));
   return cat;
 }
 
-export function updateCategory(id: number, input: CategoryInput): Category | undefined {
-  const db = readDb();
-  const idx = db.categories.findIndex((c) => c.id === id);
+async function persistCategoryLinks(cats: Category[]): Promise<void> {
+  for (const c of cats) {
+    await sb().from('categories').update({ link: c.link }).eq('id', c.id);
+  }
+}
+
+export async function updateCategory(id: number, input: CategoryInput): Promise<Category | undefined> {
+  const all = await getCategories();
+  const idx = all.findIndex((c) => c.id === id);
   if (idx === -1) return undefined;
-  const prev = db.categories[idx];
-  db.categories[idx] = {
+  const prev = all[idx];
+  const updated: Category = {
     ...prev,
     name: input.name,
     parent: input.parent ?? prev.parent,
     description: input.description ?? '',
     image: input.image === undefined ? prev.image : input.image,
   };
-  db.categories = recomputeLinks(db.categories);
-  writeDb(db);
-  return db.categories[idx];
+  const { error } = await sb().from('categories').update(updated).eq('id', id);
+  if (error) throw error;
+  await persistCategoryLinks(recomputeLinks(all.map((c) => (c.id === id ? updated : c))));
+  return updated;
 }
 
-export function deleteCategory(id: number): boolean {
-  const db = readDb();
-  const target = db.categories.find((c) => c.id === id);
+export async function deleteCategory(id: number): Promise<boolean> {
+  const all = await getCategories();
+  const target = all.find((c) => c.id === id);
   if (!target) return false;
-  db.categories = db.categories
-    .filter((c) => c.id !== id)
-    .map((c) => (c.parent === id ? { ...c, parent: target.parent } : c));
-  db.categories = recomputeLinks(db.categories);
-  db.products = db.products.map((p) => ({
-    ...p,
-    categories: p.categories.filter((c) => c.id !== id),
-  }));
-  writeDb(db);
+
+  // Reassign children to the deleted category's parent.
+  for (const c of all) {
+    if (c.parent === id) {
+      await sb().from('categories').update({ parent: target.parent }).eq('id', c.id);
+    }
+  }
+  await sb().from('categories').delete().eq('id', id);
+
+  // Remove the category reference from products.
+  const { data: products } = await sb().from('products').select('id, categories');
+  for (const p of (products ?? []) as { id: number; categories: ProductCategory[] }[]) {
+    const filtered = (p.categories ?? []).filter((c) => c.id !== id);
+    if (filtered.length !== (p.categories ?? []).length) {
+      await sb().from('products').update({ categories: filtered }).eq('id', p.id);
+    }
+  }
+
+  const remaining = recomputeLinks(all.filter((c) => c.id !== id));
+  await persistCategoryLinks(remaining);
   return true;
 }
 
 // ---- Products ----
 
-export function getProducts(): Product[] {
-  return readDb().products;
+export async function getProducts(): Promise<Product[]> {
+  const { data, error } = await sb().from('products').select('*').order('id', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Product[];
 }
 
-export function getProductById(id: number): Product | undefined {
-  return readDb().products.find((p) => p.id === id);
+export async function getProductById(id: number): Promise<Product | undefined> {
+  const { data, error } = await sb().from('products').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return (data as Product) ?? undefined;
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return readDb().products.find((p) => p.slug === slug);
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const { data, error } = await sb().from('products').select('*').eq('slug', slug).maybeSingle();
+  if (error) throw error;
+  return (data as Product) ?? undefined;
 }
 
-export function createProduct(input: ProductInput, categories: ProductCategory[]): Product {
-  const db = readDb();
-  const id = db.products.reduce((max, p) => Math.max(max, p.id), 0) + 1;
+export async function createProduct(input: ProductInput, categories: ProductCategory[]): Promise<Product> {
+  const { data } = await sb().from('products').select('id').order('id', { ascending: false }).limit(1);
+  const id = (data && data[0] ? data[0].id : 0) + 1;
   const slug = slugify(input.name) || `producto-${id}`;
   const product: Product = {
     id,
@@ -266,20 +300,18 @@ export function createProduct(input: ProductInput, categories: ProductCategory[]
     categories,
     tags: (input.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
   };
-  db.products = [product, ...db.products];
-  writeDb(db);
+  const { error } = await sb().from('products').insert(product);
+  if (error) throw error;
   return product;
 }
 
-export function updateProduct(
+export async function updateProduct(
   id: number,
   input: ProductInput,
   categories: ProductCategory[],
-): Product | undefined {
-  const db = readDb();
-  const idx = db.products.findIndex((p) => p.id === id);
-  if (idx === -1) return undefined;
-  const prev = db.products[idx];
+): Promise<Product | undefined> {
+  const prev = await getProductById(id);
+  if (!prev) return undefined;
   const updated: Product = {
     ...prev,
     name: input.name,
@@ -294,119 +326,119 @@ export function updateProduct(
     categories,
     tags: (input.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
   };
-  db.products[idx] = updated;
-  writeDb(db);
+  const { error } = await sb().from('products').update(updated).eq('id', id);
+  if (error) throw error;
   return updated;
 }
 
-export function deleteProduct(id: number): boolean {
-  const db = readDb();
-  const before = db.products.length;
-  db.products = db.products.filter((p) => p.id !== id);
-  if (db.products.length === before) return false;
-  writeDb(db);
-  return true;
+export async function deleteProduct(id: number): Promise<boolean> {
+  const { error, count } = await sb().from('products').delete({ count: 'exact' }).eq('id', id);
+  if (error) throw error;
+  return (count ?? 0) > 0;
 }
 
 // ---- Orders ----
 
-export function getOrders(): Order[] {
-  return readDb().orders;
+export async function getOrders(): Promise<Order[]> {
+  const { data, error } = await sb().from('orders').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(rowToOrder);
 }
 
-export function getOrderById(id: string): Order | undefined {
-  return readDb().orders.find((o) => o.id === id);
+export async function getOrderById(id: string): Promise<Order | undefined> {
+  const { data, error } = await sb().from('orders').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data ? rowToOrder(data) : undefined;
 }
 
-export function createOrder(data: Omit<Order, 'id' | 'number' | 'createdAt'>): Order {
-  const db = readDb();
+export async function createOrder(data: Omit<Order, 'id' | 'number' | 'createdAt'>): Promise<Order> {
   const order: Order = {
     ...data,
     id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     number: `TL-${100000 + Math.floor(Math.random() * 900000)}`,
     createdAt: new Date().toISOString(),
   };
-  db.orders = [order, ...db.orders];
-  writeDb(db);
+  const { error } = await sb().from('orders').insert(orderToRow(order));
+  if (error) throw error;
   return order;
 }
 
-export function updateOrder(id: string, data: Partial<Omit<Order, 'id'>>): Order | undefined {
-  const db = readDb();
-  const idx = db.orders.findIndex((o) => o.id === id);
-  if (idx === -1) return undefined;
-  db.orders[idx] = { ...db.orders[idx], ...data, id };
-  writeDb(db);
-  return db.orders[idx];
+export async function updateOrder(id: string, data: Partial<Omit<Order, 'id'>>): Promise<Order | undefined> {
+  const current = await getOrderById(id);
+  if (!current) return undefined;
+  const merged: Order = { ...current, ...data, id };
+  const { error } = await sb()
+    .from('orders')
+    .update({ ...orderToRow(merged), id: undefined })
+    .eq('id', id);
+  if (error) throw error;
+  return merged;
 }
 
-export function updateOrderStatus(id: string, status: OrderStatus): Order | undefined {
+export async function updateOrderStatus(id: string, status: OrderStatus): Promise<Order | undefined> {
   return updateOrder(id, { status });
 }
 
 // ---- Customers ----
 
-export function getCustomers(): Customer[] {
-  return readDb().customers;
+export async function getCustomers(): Promise<Customer[]> {
+  const { data, error } = await sb().from('customers').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(rowToCustomer);
 }
 
-export function getCustomerById(id: number): Customer | undefined {
-  return readDb().customers.find((c) => c.id === id);
+export async function getCustomerById(id: number): Promise<Customer | undefined> {
+  const { data, error } = await sb().from('customers').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data ? rowToCustomer(data) : undefined;
 }
 
-export function getCustomerByEmail(email: string): Customer | undefined {
+export async function getCustomerByEmail(email: string): Promise<Customer | undefined> {
   const e = email.trim().toLowerCase();
-  return readDb().customers.find((c) => c.email.toLowerCase() === e);
+  const { data, error } = await sb().from('customers').select('*').eq('email', e).maybeSingle();
+  if (error) throw error;
+  return data ? rowToCustomer(data) : undefined;
 }
 
-export function createCustomer(data: {
+export async function createCustomer(data: {
   nombre: string;
   apellido: string;
   email: string;
   telefono: string;
   passwordHash: string;
-}): Customer {
-  const db = readDb();
-  const id = db.customers.reduce((m, c) => Math.max(m, c.id), 0) + 1;
-  const customer: Customer = {
-    id,
+}): Promise<Customer> {
+  const row = {
     nombre: data.nombre,
     apellido: data.apellido,
     email: data.email.trim().toLowerCase(),
     telefono: data.telefono,
-    passwordHash: data.passwordHash,
-    createdAt: new Date().toISOString(),
+    password_hash: data.passwordHash,
   };
-  db.customers = [...db.customers, customer];
-  writeDb(db);
-  return customer;
+  const { data: inserted, error } = await sb().from('customers').insert(row).select().single();
+  if (error) throw error;
+  return rowToCustomer(inserted);
 }
 
-export function updateCustomer(
+export async function updateCustomer(
   id: number,
   data: { nombre?: string; apellido?: string; email?: string; telefono?: string; passwordHash?: string },
-): Customer | undefined {
-  const db = readDb();
-  const idx = db.customers.findIndex((c) => c.id === id);
-  if (idx === -1) return undefined;
-  const prev = db.customers[idx];
-  db.customers[idx] = {
-    ...prev,
+): Promise<Customer | undefined> {
+  const prev = await getCustomerById(id);
+  if (!prev) return undefined;
+  const row: Record<string, unknown> = {
     nombre: data.nombre ?? prev.nombre,
     apellido: data.apellido ?? prev.apellido,
     email: (data.email ?? prev.email).trim().toLowerCase(),
     telefono: data.telefono ?? prev.telefono,
-    passwordHash: data.passwordHash ?? prev.passwordHash,
   };
-  writeDb(db);
-  return db.customers[idx];
+  if (data.passwordHash) row.password_hash = data.passwordHash;
+  const { data: updated, error } = await sb().from('customers').update(row).eq('id', id).select().single();
+  if (error) throw error;
+  return rowToCustomer(updated);
 }
 
-export function deleteCustomer(id: number): boolean {
-  const db = readDb();
-  const before = db.customers.length;
-  db.customers = db.customers.filter((c) => c.id !== id);
-  if (db.customers.length === before) return false;
-  writeDb(db);
-  return true;
+export async function deleteCustomer(id: number): Promise<boolean> {
+  const { error, count } = await sb().from('customers').delete({ count: 'exact' }).eq('id', id);
+  if (error) throw error;
+  return (count ?? 0) > 0;
 }

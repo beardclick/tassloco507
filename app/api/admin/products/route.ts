@@ -12,6 +12,6 @@ export async function POST(req: Request) {
   if (!input.name) {
     return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
   }
-  const product = createProduct(input, resolveCategories(input.categoryIds));
+  const product = await createProduct(input, await resolveCategories(input.categoryIds));
   return NextResponse.json({ ok: true, product });
 }

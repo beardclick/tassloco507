@@ -3,7 +3,7 @@
 Rediseño de [tassloco507.com](https://tassloco507.com), tienda online de piezas de auto,
 accesorios racing y ropa streetwear en Panamá 🇵🇦.
 
-> **Fase actual: diseño / frontend.** Backend, base de datos y deploy se trabajan después.
+> Tienda completa con panel admin, base de datos **Supabase (Postgres)**, correos con **Resend** y lista para deploy en **Vercel**.
 
 ## Stack
 
@@ -47,12 +47,12 @@ accesorios racing y ropa streetwear en Panamá 🇵🇦.
 
 Funciones:
 - **Productos**: listar, buscar, crear, editar y eliminar (CRUD). Los cambios se reflejan al instante en la tienda.
-- **Galería de productos**: imagen destacada + galería de imágenes, con subida arrastrando/clic o desde la **galería de medios** (los archivos se guardan en `public/uploads/`).
+- **Galería de productos**: imagen destacada + galería de imágenes, con subida arrastrando/clic o desde la **galería de medios** (los archivos se guardan en Supabase Storage).
 - **Categorías**: crear, editar y eliminar (con jerarquía padre/hijo).
 - **Pedidos**: listar, editar por completo (artículos, cliente, entrega, pago, estado) y cambiar estado (pendiente → confirmado → despachado → entregado → cancelado).
 - **Clientes**: los clientes se registran en `/registro` e inician sesión en `/login` (su cuenta en `/my-account`); en el admin puedes ver la lista de clientes y sus pedidos.
 
-Los datos se guardan en `data/db.json` (almacén JSON simple; se sustituye por una base de datos real en la fase de deploy).
+Los datos se guardan en **Supabase (Postgres)** y las imágenes en **Supabase Storage**.
 
 ## Datos
 
@@ -90,35 +90,37 @@ data/                   # productos y categorías importados
 scripts/scrape.mjs      # importador del catálogo
 ```
 
-## Deploy (Vercel + GitHub + Resend)
+## Deploy (Vercel + GitHub + Supabase + Resend)
 
-### 1. Subir a GitHub
+### 1. Supabase (base de datos + imágenes)
+1. Crea un proyecto en [supabase.com](https://supabase.com) (gratis).
+2. En **SQL Editor** ejecuta el contenido de `supabase/schema.sql` (crea las tablas).
+3. Crea un **bucket público** en **Storage** llamado `product-images`.
+4. En **Project Settings → API** copia la **URL** y la **`service_role` key**.
+5. Siembra el catálogo:
+   ```bash
+   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed-supabase.mjs
+   ```
+
+### 2. Subir a GitHub
 ```bash
 git remote add origin https://github.com/TU-USUARIO/tassloco507.git
 git push -u origin main
 ```
 
-### 2. Conectar a Vercel
+### 3. Conectar a Vercel
 1. En [vercel.com](https://vercel.com) → **New Project** → importa el repo de GitHub.
 2. Framework **Next.js** (se detecta solo; no hace falta `vercel.json`).
-3. En **Settings → Environment Variables** copia las variables de `.env.example`.
+3. En **Settings → Environment Variables** copia las variables de `.env.example` (Supabase + Resend + Admin + Auth).
 
-### 3. Resend (correos)
+### 4. Resend (correos)
 1. Crea cuenta en [resend.com](https://resend.com) y **verifica tu dominio**.
 2. Crea una **API key** → `RESEND_API_KEY`.
 3. `EMAIL_FROM` debe ser un remitente verificado (ej. `pedidos@tassloco507.com`).
 
 Al recibir un pedido se envía: confirmación al cliente + aviso al admin (`ADMIN_EMAIL`).
 
-### ⚠️ Base de datos (obligatorio antes de producción)
-Hoy los productos, pedidos, clientes y categorías se guardan en `data/db.json`, y las imágenes en `public/uploads/`. **Esto no persiste en Vercel** (filesystem efímero y de solo lectura).
-
-Para producción hay que migrar a:
-- **Base de datos**: Vercel Postgres / Neon (Postgres alojado).
-- **Imágenes**: Vercel Blob (en vez de `public/uploads`).
-
 ## Próximos pasos
 
-1. Migrar persistencia a Postgres (Vercel Postgres/Neon) + Vercel Blob para imágenes.
-2. Notificaciones por WhatsApp al admin (además del correo de Resend).
-3. Pasarela de pago opcional (Yappy, tarjeta).
+1. Notificaciones por WhatsApp al admin (además del correo de Resend).
+2. Pasarela de pago opcional (Yappy, tarjeta).

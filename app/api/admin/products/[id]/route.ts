@@ -13,7 +13,7 @@ export async function PUT(
   const { id } = await params;
   const body = await req.json();
   const input = parseProductInput(body);
-  const updated = updateProduct(Number(id), input, resolveCategories(input.categoryIds));
+  const updated = await updateProduct(Number(id), input, await resolveCategories(input.categoryIds));
   if (!updated) {
     return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
   }
@@ -28,7 +28,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const { id } = await params;
-  const ok = deleteProduct(Number(id));
+  const ok = await deleteProduct(Number(id));
   if (!ok) {
     return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
   }

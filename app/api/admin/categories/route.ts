@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   if (!name) {
     return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
   }
-  const category = createCategory({
+  const category = await createCategory({
     name,
     parent: body.parent ? Number(body.parent) : 0,
     description: String(body.description ?? '').trim(),

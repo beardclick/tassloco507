@@ -2,9 +2,10 @@ import { categoryPath, loadCategories } from './catalog';
 import type { ProductCategory } from './catalog';
 import type { ProductInput } from './db';
 
-export function resolveCategories(categoryIds?: number[]): ProductCategory[] {
+export async function resolveCategories(categoryIds?: number[]): Promise<ProductCategory[]> {
   if (!categoryIds || categoryIds.length === 0) return [];
-  const byId = new Map(loadCategories().map((c) => [c.id, c]));
+  const cats = await loadCategories();
+  const byId = new Map(cats.map((c) => [c.id, c]));
   const out: ProductCategory[] = [];
   for (const id of categoryIds) {
     const c = byId.get(id);
@@ -13,7 +14,7 @@ export function resolveCategories(categoryIds?: number[]): ProductCategory[] {
         id: c.id,
         name: c.name,
         slug: c.slug,
-        link: `https://tassloco507.com${categoryPath(c)}`,
+        link: `https://tassloco507.com${await categoryPath(c)}`,
       });
     }
   }
@@ -26,8 +27,8 @@ export interface CategoryOption {
   depth: number;
 }
 
-export function flattenCategories(): CategoryOption[] {
-  const cats = loadCategories();
+export async function flattenCategories(): Promise<CategoryOption[]> {
+  const cats = await loadCategories();
   const result: CategoryOption[] = [];
   function walk(parentId: number, depth: number) {
     const children = cats

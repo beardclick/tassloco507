@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const cat = slug?.length ? getCategoryByPath(slug) : undefined;
+  const cat = slug?.length ? await getCategoryByPath(slug) : undefined;
   if (!cat) return { title: 'Categoría' };
   return { title: cat.name };
 }
@@ -31,17 +31,25 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     redirect('/shop');
   }
 
-  const cat = getCategoryByPath(slug);
+  const cat = await getCategoryByPath(slug);
   if (!cat) notFound();
 
-  const products = getProductsForCategory(cat);
-  const children = getCategoryChildren(cat);
-  const path = categorySlugPath(cat);
+  const products = await getProductsForCategory(cat);
+  const children = await getCategoryChildren(cat);
+  const path = await categorySlugPath(cat);
 
-  const crumbs = path.map((seg, i) => ({
-    label: getCategoryByPath(path.slice(0, i + 1))?.name ?? seg,
-    href: '/categoria-producto/' + path.slice(0, i + 1).join('/'),
-  }));
+  const crumbs = [];
+  for (let i = 0; i < path.length; i++) {
+    const prefix = path.slice(0, i + 1);
+    const pc = await getCategoryByPath(prefix);
+    crumbs.push({
+      label: pc?.name ?? prefix[prefix.length - 1],
+      href: '/categoria-producto/' + prefix.join('/'),
+    });
+  }
+
+  const childCounts = new Map<number, number>();
+  for (const c of children) childCounts.set(c.id, await getCategoryProductCount(c));
 
   return (
     <>
@@ -61,7 +69,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             <div className="chips" style={{ marginBottom: 24 }}>
               {children.map((c) => (
                 <Link key={c.id} href={`/categoria-producto/${path.join('/')}/${c.slug}`} className="chip">
-                  {c.name} ({getCategoryProductCount(c)})
+                  {c.name} ({childCounts.get(c.id) ?? 0})
                 </Link>
               ))}
             </div>

@@ -22,18 +22,18 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return { title: 'Producto no encontrado' };
   return { title: product.name, description: product.short_description };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   const summary = toSummary(product);
-  const related = getRelatedProducts(product, 4);
+  const related = await getRelatedProducts(product, 4);
   const firstCat = product.categories[0];
   const firstCatHref = firstCat
     ? firstCat.link.replace('https://tassloco507.com', '')

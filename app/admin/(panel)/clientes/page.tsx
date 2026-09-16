@@ -4,9 +4,9 @@ import { DeleteCustomerButton } from '@/components/admin/DeleteCustomerButton';
 
 export const dynamic = 'force-dynamic';
 
-export default function AdminClientes() {
-  const customers = getCustomers();
-  const orders = getOrders();
+export default async function AdminClientes() {
+  const customers = await getCustomers();
+  const orders = await getOrders();
 
   const orderCount = (email: string) =>
     orders.filter((o) => o.customer.email.toLowerCase() === email.toLowerCase()).length;

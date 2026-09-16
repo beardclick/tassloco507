@@ -11,13 +11,13 @@ export default async function EditarCategoriaPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const category = getCategoryById(Number(id));
+  const category = await getCategoryById(Number(id));
   if (!category) notFound();
 
   return (
     <div>
       <h1 className="admin-title">Editar categoría</h1>
-      <CategoryForm category={category} categories={flattenCategories()} />
+      <CategoryForm category={category} categories={await flattenCategories()} />
     </div>
   );
 }

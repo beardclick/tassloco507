@@ -30,8 +30,8 @@ export default async function MyAccountPage() {
     );
   }
 
-  const customer = getCustomerByEmail(session.email);
-  const orders = getOrders().filter(
+  const customer = await getCustomerByEmail(session.email);
+  const orders = (await getOrders()).filter(
     (o) => o.customer.email.toLowerCase() === session.email.toLowerCase(),
   );
 

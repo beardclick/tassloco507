@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { isAdminRequest } from '@/lib/auth';
+import { getSupabase, STORAGE_BUCKET } from '@/lib/supabase';
 
 const ALLOWED = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'avif'];
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -26,11 +25,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Formato no permitido' }, { status: 400 });
   }
 
-  const bytes = Buffer.from(await file.arrayBuffer());
+  const bytes = await file.arrayBuffer();
   const name = `${Date.now()}-${randomBytes(4).toString('hex')}.${ext}`;
-  const dir = path.join(process.cwd(), 'public', 'uploads');
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, name), bytes);
 
-  return NextResponse.json({ ok: true, url: `/uploads/${name}` });
+  const sb = getSupabase();
+  const { error } = await sb.storage.from(STORAGE_BUCKET).upload(name, bytes, {
+    contentType: file.type || 'application/octet-stream',
+  });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const url = sb.storage.from(STORAGE_BUCKET).getPublicUrl(name).data.publicUrl;
+  return NextResponse.json({ ok: true, url });
 }

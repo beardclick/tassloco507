@@ -15,17 +15,19 @@ const HERO_IMG = 'https://tassloco507.com/wp-content/uploads/2020/06/banner-tass
 
 export const dynamic = 'force-dynamic';
 
-export default function HomePage() {
-  const roots = categoryTree();
-  const featured = featuredProducts(4);
-  const autoParts = getCategoryByPath(['auto-parts']);
-  const autoPartsProducts = autoParts ? getProductsForCategory(autoParts).slice(0, 4) : [];
-  const gorras = getCategoryByPath(['gorras-snapbacks']);
-  const sueter = getCategoryByPath(['sueter']);
+export default async function HomePage() {
+  const roots = await categoryTree();
+  const featured = await featuredProducts(4);
+  const autoParts = await getCategoryByPath(['auto-parts']);
+  const autoPartsProducts = autoParts ? (await getProductsForCategory(autoParts)).slice(0, 4) : [];
+  const gorras = await getCategoryByPath(['gorras-snapbacks']);
+  const sueter = await getCategoryByPath(['sueter']);
   const street = [
-    ...(gorras ? getProductsForCategory(gorras) : []),
-    ...(sueter ? getProductsForCategory(sueter) : []),
+    ...(gorras ? await getProductsForCategory(gorras) : []),
+    ...(sueter ? await getProductsForCategory(sueter) : []),
   ].slice(0, 4);
+  const counts = new Map<number, number>();
+  for (const c of roots) counts.set(c.id, await getCategoryProductCount(c));
 
   return (
     <>
@@ -144,7 +146,7 @@ export default function HomePage() {
                       {c.name}
                     </div>
                   )}
-                  <span className="category-card__count">{getCategoryProductCount(c)}</span>
+                  <span className="category-card__count">{counts.get(c.id) ?? 0}</span>
                 </div>
                 <div className="category-card__body">
                   <h3 className="category-card__name">{c.name}</h3>

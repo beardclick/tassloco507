@@ -1,5 +1,8 @@
 import type { ProductSummary } from './client-types';
-import { getCategories as dbGetCategories, getProducts as dbGetProducts } from './db';
+import {
+  getCategories as dbGetCategories,
+  getProducts as dbGetProducts,
+} from './db';
 
 export interface ProductImage {
   src: string;
@@ -60,25 +63,23 @@ export interface CategoryNode extends Category {
   children: CategoryNode[];
 }
 
-export function loadProducts(): Product[] {
+export async function loadProducts(): Promise<Product[]> {
   return dbGetProducts();
 }
 
-export function loadCategories(): Category[] {
+export async function loadCategories(): Promise<Category[]> {
   return dbGetCategories();
 }
 
-const catById = () => new Map(loadCategories().map((c) => [c.id, c]));
+async function catById(): Promise<Map<number, Category>> {
+  return new Map((await loadCategories()).map((c) => [c.id, c]));
+}
 
-export function getCategoryByPath(segments: string[]): Category | undefined {
-  const bySlug = new Map<string, Category>();
-  for (const c of loadCategories()) {
-    bySlug.set(c.slug, c);
-  }
-  // Walk: find top-level by first segment, then descend.
+export async function getCategoryByPath(segments: string[]): Promise<Category | undefined> {
+  const cats = await loadCategories();
   let current: Category | undefined;
   for (const seg of segments) {
-    const candidates = loadCategories().filter(
+    const candidates = cats.filter(
       (c) => c.slug === seg && (!current ? c.parent === 0 : c.parent === current.id),
     );
     if (candidates.length === 0) return undefined;
@@ -88,8 +89,8 @@ export function getCategoryByPath(segments: string[]): Category | undefined {
 }
 
 /** Full slug path for a category, e.g. ['auto-parts', 'lip-auto-parts']. */
-export function categorySlugPath(cat: Category): string[] {
-  const map = catById();
+export async function categorySlugPath(cat: Category): Promise<string[]> {
+  const map = await catById();
   const path: string[] = [];
   let cur: Category | undefined = cat;
   let guard = 0;
@@ -101,20 +102,19 @@ export function categorySlugPath(cat: Category): string[] {
   return path;
 }
 
-export function categoryPath(cat: Category): string {
-  return '/categoria-producto/' + categorySlugPath(cat).join('/');
+export async function categoryPath(cat: Category): Promise<string> {
+  return '/categoria-producto/' + (await categorySlugPath(cat)).join('/');
 }
 
-export function categoryTree(): CategoryNode[] {
-  const cats = loadCategories();
-  const map = catById();
-  const nodes = new Map<number, CategoryNode>();
-  for (const c of cats) nodes.set(c.id, { ...c, children: [] });
+export async function categoryTree(): Promise<CategoryNode[]> {
+  const cats = await loadCategories();
+  const map = new Map<number, CategoryNode>();
+  for (const c of cats) map.set(c.id, { ...c, children: [] });
   const roots: CategoryNode[] = [];
   for (const c of cats) {
-    const node = nodes.get(c.id)!;
-    if (c.parent && nodes.has(c.parent)) {
-      nodes.get(c.parent)!.children.push(node);
+    const node = map.get(c.id)!;
+    if (c.parent && map.has(c.parent)) {
+      map.get(c.parent)!.children.push(node);
     } else {
       roots.push(node);
     }
@@ -127,16 +127,22 @@ export function categoryTree(): CategoryNode[] {
   return roots;
 }
 
-export function getCategoryChildren(cat: Category): Category[] {
-  return loadCategories()
+export async function getCategoryChildren(cat: Category): Promise<Category[]> {
+  const cats = await loadCategories();
+  return cats
     .filter((c) => c.parent === cat.id)
     .sort((a, b) => a.name.localeCompare(b.name, 'es'));
 }
 
+export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
+  const cats = await loadCategories();
+  return cats.find((c) => c.slug === slug);
+}
+
 /** All category ids in this category's subtree (including itself). */
-export function categorySubtreeIds(cat: Category): number[] {
+export async function categorySubtreeIds(cat: Category): Promise<number[]> {
+  const cats = await loadCategories();
   const ids = new Set<number>([cat.id]);
-  const cats = loadCategories();
   let changed = true;
   while (changed) {
     changed = false;
@@ -150,34 +156,24 @@ export function categorySubtreeIds(cat: Category): number[] {
   return [...ids];
 }
 
-export function getProductsForCategory(cat: Category): Product[] {
-  const ids = new Set(categorySubtreeIds(cat));
-  return loadProducts().filter((p) => p.categories.some((c) => ids.has(c.id)));
+export async function getProductsForCategory(cat: Category): Promise<Product[]> {
+  const ids = new Set(await categorySubtreeIds(cat));
+  const products = await loadProducts();
+  return products.filter((p) => p.categories.some((c) => ids.has(c.id)));
 }
 
-export function getCategoryProductCount(cat: Category): number {
-  return getProductsForCategory(cat).length;
+export async function getCategoryProductCount(cat: Category): Promise<number> {
+  return (await getProductsForCategory(cat)).length;
 }
 
-export function getCategoryBySlug(slug: string): Category | undefined {
-  return loadCategories().find((c) => c.slug === slug);
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  return dbGetProducts().then((all) => all.find((p) => p.slug === slug));
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return loadProducts().find((p) => p.slug === slug);
-}
-
-export function getAllSlugs(): string[] {
-  return loadProducts().map((p) => p.slug);
-}
-
-export function getAllCategoryPaths(): string[][] {
-  return loadCategories().map((c) => categorySlugPath(c));
-}
-
-export function getRelatedProducts(product: Product, limit = 4): Product[] {
+export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
+  const all = await loadProducts();
   const catIds = new Set(product.categories.map((c) => c.id));
-  const scored = loadProducts()
+  const scored = all
     .filter((p) => p.slug !== product.slug)
     .map((p) => {
       let score = 0;
@@ -191,13 +187,14 @@ export function getRelatedProducts(product: Product, limit = 4): Product[] {
   return scored.slice(0, limit).map((s) => s.p);
 }
 
-export function productsWithImages(): Product[] {
-  return loadProducts().filter((p) => p.images.length > 0);
+export async function productsWithImages(): Promise<Product[]> {
+  const all = await loadProducts();
+  return all.filter((p) => p.images.length > 0);
 }
 
-export function featuredProducts(limit = 8): Product[] {
-  // Prefer in-stock products that have images; newest first.
-  return loadProducts()
+export async function featuredProducts(limit = 8): Promise<Product[]> {
+  const all = await loadProducts();
+  return all
     .filter((p) => p.in_stock && p.images.length > 0)
     .sort((a, b) => b.id - a.id)
     .slice(0, limit);
@@ -233,7 +230,9 @@ export function toSummary(p: Product): ProductSummary {
     slug: p.slug,
     name: p.name,
     price: moneyValue(p.prices),
-    regularPrice: p.on_sale ? Number(p.prices.regular_price) / Math.pow(10, p.prices.currency_minor_unit ?? 2) : undefined,
+    regularPrice: p.on_sale
+      ? Number(p.prices.regular_price) / Math.pow(10, p.prices.currency_minor_unit ?? 2)
+      : undefined,
     onSale: p.on_sale,
     inStock: p.in_stock,
     image: p.images.length > 0 ? p.images[0].src : null,
@@ -242,11 +241,12 @@ export function toSummary(p: Product): ProductSummary {
   };
 }
 
-export function searchProducts(query: string): Product[] {
+export async function searchProducts(query: string): Promise<Product[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
   const terms = q.split(/\s+/);
-  return loadProducts().filter((p) => {
+  const all = await loadProducts();
+  return all.filter((p) => {
     const haystack = [
       p.name,
       p.slug,

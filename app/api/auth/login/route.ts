@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const email = String(body.email ?? '').trim().toLowerCase();
   const password = String(body.password ?? '');
 
-  const customer = getCustomerByEmail(email);
+  const customer = await getCustomerByEmail(email);
   if (!customer || !verifyPassword(password, customer.passwordHash)) {
     return NextResponse.json({ ok: false, error: 'Correo o contraseña incorrectos' }, { status: 401 });
   }

@@ -12,7 +12,7 @@ export default async function AdminProductos({
 }) {
   const { q } = await searchParams;
   const query = (q ?? '').toLowerCase().trim();
-  let products = getProducts();
+  let products = await getProducts();
   if (query) {
     products = products.filter((p) =>
       `${p.name} ${p.sku}`.toLowerCase().includes(query),
