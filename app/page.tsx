@@ -84,7 +84,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <Marquee items={homepage.marqueeItems} />
+      <Marquee items={homepage.marqueeItems} speedDesktop={homepage.marqueeSpeedDesktop} speedMobile={homepage.marqueeSpeedMobile} />
 
       {/* FEATURES */}
       <section className="features">
@@ -203,17 +203,17 @@ export default async function HomePage() {
       <section className="bg-stripes-red" style={{ padding: '48px 0' }}>
         <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center', textAlign: 'center' }}>
           <h2 className="heading" style={{ color: '#fff', fontSize: 'clamp(1.8rem,4vw,3rem)', margin: 0 }}>
-            ¿No encuentras tu pieza?
+            {homepage.quoteTitle}
           </h2>
           <p style={{ color: '#fff', margin: 0, maxWidth: 520 }}>
-            Cotiza piezas especiales o a tu medida. Te conseguimos lo que tu carro necesita.
+            {homepage.quoteDescription}
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link href="/request-quote" className="btn btn--black btn--lg">
-              Cotizar pieza
+            <Link href={homepage.quotePrimaryHref} className="btn btn--black btn--lg">
+              {homepage.quotePrimaryLabel}
             </Link>
-            <a href={SITE.whatsappLink} target="_blank" rel="noreferrer" className="btn btn--ghost btn--lg">
-              <WhatsappIcon style={{ width: 18, height: 18 }} /> WhatsApp
+            <a href={homepage.quoteSecondaryHref} target="_blank" rel="noreferrer" className="btn btn--ghost btn--lg">
+              <WhatsappIcon style={{ width: 18, height: 18 }} /> {homepage.quoteSecondaryLabel}
             </a>
           </div>
         </div>

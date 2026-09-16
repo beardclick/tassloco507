@@ -405,7 +405,7 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 .marquee__track {
   display: flex;
   width: max-content;
-  animation: marquee 32s linear infinite;
+  animation: marquee var(--marquee-speed-desktop, 32s) linear infinite;
 }
 .marquee__group {
   display: flex;
@@ -510,6 +510,9 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+}
+@media (max-width: 640px) {
+  .marquee__track { animation-duration: var(--marquee-speed-mobile, 22s); }
 }
 .hero__corner {
   position: absolute;

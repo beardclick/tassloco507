@@ -3,6 +3,7 @@ import 'server-only';
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { getSupabase, STORAGE_BUCKET } from '@/lib/supabase';
+import { SITE } from '@/lib/site';
 
 export interface HomepageSettings {
   heroImage: string;
@@ -21,6 +22,14 @@ export interface HomepageSettings {
   topLeftBadge: string;
   bottomRightBadge: string;
   marqueeItems: string[];
+  marqueeSpeedDesktop: number;
+  marqueeSpeedMobile: number;
+  quoteTitle: string;
+  quoteDescription: string;
+  quotePrimaryLabel: string;
+  quotePrimaryHref: string;
+  quoteSecondaryLabel: string;
+  quoteSecondaryHref: string;
 }
 
 export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
@@ -41,6 +50,14 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   stickers: ['ENVÍOS A TODO PANAMÁ', 'STREET · RACING', '#TASSLOCO507'],
   topLeftBadge: 'Fresh 🔥',
   bottomRightBadge: 'Panamá 507',
+  marqueeSpeedDesktop: 32,
+  marqueeSpeedMobile: 22,
+  quoteTitle: '¿No encuentras tu pieza?',
+  quoteDescription: 'Cotiza piezas especiales o a tu medida. Te conseguimos lo que tu carro necesita.',
+  quotePrimaryLabel: 'Cotizar pieza',
+  quotePrimaryHref: '/request-quote',
+  quoteSecondaryLabel: 'WhatsApp',
+  quoteSecondaryHref: SITE.whatsappLink,
   marqueeItems: [
     'FASHION',
     'CAR',
@@ -71,6 +88,10 @@ function cleanSettings(value: Partial<HomepageSettings>): HomepageSettings {
   const marqueeItems = Array.isArray(value.marqueeItems)
     ? value.marqueeItems.map((item) => String(item).trim()).filter(Boolean).slice(0, 20)
     : [];
+  const speed = (key: 'marqueeSpeedDesktop' | 'marqueeSpeedMobile') => {
+    const n = Number(value[key]);
+    return Number.isFinite(n) ? Math.min(180, Math.max(5, n)) : DEFAULT_HOMEPAGE_SETTINGS[key];
+  };
 
   return {
     heroImage: heroImage || DEFAULT_HOMEPAGE_SETTINGS.heroImage,
@@ -90,6 +111,14 @@ function cleanSettings(value: Partial<HomepageSettings>): HomepageSettings {
     bottomRightBadge: text('bottomRightBadge'),
     marqueeItems:
       marqueeItems.length > 0 ? marqueeItems : DEFAULT_HOMEPAGE_SETTINGS.marqueeItems,
+    marqueeSpeedDesktop: speed('marqueeSpeedDesktop'),
+    marqueeSpeedMobile: speed('marqueeSpeedMobile'),
+    quoteTitle: text('quoteTitle'),
+    quoteDescription: text('quoteDescription'),
+    quotePrimaryLabel: text('quotePrimaryLabel'),
+    quotePrimaryHref: text('quotePrimaryHref'),
+    quoteSecondaryLabel: text('quoteSecondaryLabel'),
+    quoteSecondaryHref: text('quoteSecondaryHref'),
   };
 }
 

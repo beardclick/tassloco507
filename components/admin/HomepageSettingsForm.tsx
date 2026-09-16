@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import type { HomepageSettings } from '@/lib/homepage-settings';
 import { ImagePicker } from './ImagePicker';
 
-type TextKey = Exclude<keyof HomepageSettings, 'marqueeItems' | 'stickers'>;
+type TextKey = Exclude<keyof HomepageSettings, 'marqueeItems' | 'stickers' | 'marqueeSpeedDesktop' | 'marqueeSpeedMobile'>;
 
 export function HomepageSettingsForm({ settings }: { settings: HomepageSettings }) {
   const [content, setContent] = useState(settings);
@@ -57,6 +57,20 @@ export function HomepageSettingsForm({ settings }: { settings: HomepageSettings 
           recommended="Tamaño recomendado: 1200 px de ancho, formato horizontal."
         />
       </div>
+      <div className="form-grid">
+        <NumberField id="marquee-speed-desktop" label="Velocidad desktop (segundos)" value={content.marqueeSpeedDesktop} onChange={(value) => setContent((current) => ({ ...current, marqueeSpeedDesktop: value }))} />
+        <NumberField id="marquee-speed-mobile" label="Velocidad móvil (segundos)" value={content.marqueeSpeedMobile} onChange={(value) => setContent((current) => ({ ...current, marqueeSpeedMobile: value }))} />
+      </div>
+
+      <h2 className="admin-card__title homepage-settings__section">Sección de cotización</h2>
+      <div className="form-grid">
+        <TextField id="quote-title" label="Título" value={content.quoteTitle} onChange={(value) => setText('quoteTitle', value)} />
+        <TextField id="quote-description" label="Descripción" value={content.quoteDescription} onChange={(value) => setText('quoteDescription', value)} />
+        <TextField id="quote-primary-label" label="Botón principal" value={content.quotePrimaryLabel} onChange={(value) => setText('quotePrimaryLabel', value)} />
+        <TextField id="quote-primary-href" label="Enlace principal" value={content.quotePrimaryHref} onChange={(value) => setText('quotePrimaryHref', value)} />
+        <TextField id="quote-secondary-label" label="Botón secundario" value={content.quoteSecondaryLabel} onChange={(value) => setText('quoteSecondaryLabel', value)} />
+        <TextField id="quote-secondary-href" label="Enlace secundario" value={content.quoteSecondaryHref} onChange={(value) => setText('quoteSecondaryHref', value)} />
+      </div>
 
       <h2 className="admin-card__title homepage-settings__section">Textos del hero</h2>
       <div className="form-grid">
@@ -108,4 +122,8 @@ function TextField({ id, label, value, onChange }: { id: string; label: string; 
       <input id={id} required value={value} onChange={(event) => onChange(event.target.value)} />
     </div>
   );
+}
+
+function NumberField({ id, label, value, onChange }: { id: string; label: string; value: number; onChange: (value: number) => void }) {
+  return <div className="form-field"><label htmlFor={id}>{label}</label><input id={id} type="number" min={5} max={180} step={1} value={value} onChange={(event) => onChange(Number(event.target.value))} /><small className="admin-muted">Mayor número = más lento.</small></div>;
 }
