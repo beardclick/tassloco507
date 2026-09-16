@@ -3,15 +3,18 @@ import { getProducts } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
 import { DeleteProductButton } from '@/components/admin/DeleteProductButton';
 import { flattenCategories } from '@/lib/admin';
+import { Pagination } from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic';
+
+const PER_PAGE = 20;
 
 export default async function AdminProductos({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string; sort?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; sort?: string; status?: string; page?: string }>;
 }) {
-  const { q, category, sort = 'date-desc', status = 'all' } = await searchParams;
+  const { q, category, sort = 'date-desc', status = 'all', page } = await searchParams;
   const query = (q ?? '').toLowerCase().trim();
   const categories = await flattenCategories();
   let products = await getProducts(true);
@@ -36,6 +39,22 @@ export default async function AdminProductos({
     const bDate = b.createdAt ? Date.parse(b.createdAt) : b.id;
     return sort === 'date-asc' ? aDate - bDate : bDate - aDate;
   });
+
+  const total = products.length;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+  const currentPage = Math.min(totalPages, Math.max(1, Number(page) || 1));
+  const pageProducts = products.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
+  function hrefForPage(p: number) {
+    const sp = new URLSearchParams();
+    if (q) sp.set('q', q);
+    if (category) sp.set('category', category);
+    if (status && status !== 'all') sp.set('status', status);
+    if (sort && sort !== 'date-desc') sp.set('sort', sort);
+    if (p > 1) sp.set('page', String(p));
+    const qs = sp.toString();
+    return qs ? `/admin/productos?${qs}` : '/admin/productos';
+  }
 
   return (
     <div>
@@ -96,7 +115,7 @@ export default async function AdminProductos({
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {pageProducts.map((p) => (
                 <tr key={p.id}>
                   <td>
                     <div className="admin-product">
@@ -141,8 +160,12 @@ export default async function AdminProductos({
           </table>
         )}
         <p className="admin-muted" style={{ marginTop: 12 }}>
-          {products.length} producto{products.length === 1 ? '' : 's'} mostrado{products.length === 1 ? '' : 's'}
+          {total} producto{total === 1 ? '' : 's'}
+          {totalPages > 1
+            ? ` · página ${currentPage} de ${totalPages}`
+            : ''}
         </p>
+        <Pagination page={currentPage} totalPages={totalPages} hrefForPage={hrefForPage} />
       </div>
     </div>
   );
