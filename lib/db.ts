@@ -111,6 +111,21 @@ function buildImages(urls: string[] | undefined, alt: string): { src: string; th
   return (urls ?? []).filter(Boolean).map((src) => ({ src, thumbnail: src, alt }));
 }
 
+// Algunos productos importados conservan la entidad HTML literal del guion largo.
+// Normalizamos al mostrar/usar el catálogo sin tener que editar cada registro.
+function normalizeDash(value: unknown): string {
+  return String(value ?? '').replace(/(?:&#8211;?|&ndash;?)/gi, '-');
+}
+
+function normalizeProductText(product: Product): Product {
+  return {
+    ...product,
+    name: normalizeDash(product.name),
+    short_description: normalizeDash(product.short_description),
+    description: normalizeDash(product.description),
+  };
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function rowToOrder(row: any): Order {
   return {
@@ -268,7 +283,7 @@ export async function getProducts(includeDrafts = false): Promise<Product[]> {
   if (error) throw error;
   const meta = await getProductMetaMap();
   const products = ((data ?? []) as Product[]).map((product) => ({
-    ...product,
+    ...normalizeProductText(product),
     draft: meta[String(product.id)]?.draft ?? false,
     createdAt: meta[String(product.id)]?.createdAt,
   }));
@@ -281,7 +296,7 @@ export async function getProductById(id: number): Promise<Product | undefined> {
   if (!data) return undefined;
   const meta = await getProductMetaMap();
   return {
-    ...(data as Product),
+    ...normalizeProductText(data as Product),
     draft: meta[String(id)]?.draft ?? false,
     createdAt: meta[String(id)]?.createdAt,
   };
@@ -291,7 +306,7 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
   const { data, error } = await sb().from('products').select('*').eq('slug', slug).maybeSingle();
   if (error) throw error;
   if (!data) return undefined;
-  const product = data as Product;
+  const product = normalizeProductText(data as Product);
   const meta = await getProductMetaMap();
   if (meta[String(product.id)]?.draft) return undefined;
   return { ...product, draft: false, createdAt: meta[String(product.id)]?.createdAt };
