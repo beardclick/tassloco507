@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createOrder, type OrderItem } from '@/lib/db';
+import { sendOrderEmails } from '@/lib/email';
 
 interface OrderPayload {
   customer?: { nombre?: string; apellido?: string; email?: string; telefono?: string };
@@ -55,6 +56,9 @@ export async function POST(req: Request) {
     subtotal,
     total: subtotal,
   });
+
+  // Enviar correos (confirmación al cliente + aviso al admin) sin bloquear el pedido si falla.
+  await sendOrderEmails(order).catch(() => {});
 
   return NextResponse.json({ ok: true, order });
 }

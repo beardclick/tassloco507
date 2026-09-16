@@ -90,10 +90,35 @@ data/                   # productos y categorías importados
 scripts/scrape.mjs      # importador del catálogo
 ```
 
-## Próximos pasos (fase backend)
+## Deploy (Vercel + GitHub + Resend)
 
-1. Sustituir el almacén JSON (`data/db.json`) por una base de datos real (Postgres/MySQL/SQLite + Prisma).
-2. Notificaciones de pedidos (email/WhatsApp al admin y al cliente).
-3. Autenticación de clientes (`/my-account`) y wishlist persistente.
-4. Pasarela de pago opcional (Yappy, tarjeta).
-5. Deploy (Vercel u otro hosting).
+### 1. Subir a GitHub
+```bash
+git remote add origin https://github.com/TU-USUARIO/tassloco507.git
+git push -u origin main
+```
+
+### 2. Conectar a Vercel
+1. En [vercel.com](https://vercel.com) → **New Project** → importa el repo de GitHub.
+2. Framework **Next.js** (se detecta solo; no hace falta `vercel.json`).
+3. En **Settings → Environment Variables** copia las variables de `.env.example`.
+
+### 3. Resend (correos)
+1. Crea cuenta en [resend.com](https://resend.com) y **verifica tu dominio**.
+2. Crea una **API key** → `RESEND_API_KEY`.
+3. `EMAIL_FROM` debe ser un remitente verificado (ej. `pedidos@tassloco507.com`).
+
+Al recibir un pedido se envía: confirmación al cliente + aviso al admin (`ADMIN_EMAIL`).
+
+### ⚠️ Base de datos (obligatorio antes de producción)
+Hoy los productos, pedidos, clientes y categorías se guardan en `data/db.json`, y las imágenes en `public/uploads/`. **Esto no persiste en Vercel** (filesystem efímero y de solo lectura).
+
+Para producción hay que migrar a:
+- **Base de datos**: Vercel Postgres / Neon (Postgres alojado).
+- **Imágenes**: Vercel Blob (en vez de `public/uploads`).
+
+## Próximos pasos
+
+1. Migrar persistencia a Postgres (Vercel Postgres/Neon) + Vercel Blob para imágenes.
+2. Notificaciones por WhatsApp al admin (además del correo de Resend).
+3. Pasarela de pago opcional (Yappy, tarjeta).
