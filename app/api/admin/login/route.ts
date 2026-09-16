@@ -13,7 +13,6 @@ export async function POST(req: Request) {
   const password = String(body.password ?? '');
 
   let authenticated = verifyCredentials(user, password);
-  let identity = user;
 
   // También permite entrar con un usuario confirmado de Supabase Auth.
   if (!authenticated && user.includes('@') && password) {
@@ -23,7 +22,6 @@ export async function POST(req: Request) {
         password,
       });
       authenticated = Boolean(data.user && !error);
-      if (authenticated) identity = data.user!.email ?? user;
     } catch {
       authenticated = false;
     }
@@ -37,7 +35,9 @@ export async function POST(req: Request) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(AUTH_COOKIE, signToken(identity), {
+  // La cookie representa la sesión interna del panel, independientemente
+  // de si la autenticación se hizo con las credenciales legacy o Supabase.
+  res.cookies.set(AUTH_COOKIE, signToken(), {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',

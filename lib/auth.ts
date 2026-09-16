@@ -37,5 +37,5 @@ export function verifyToken(token: string | undefined | null): boolean {
   const expected = createHmac('sha256', SECRET).update(payload).digest('hex');
   if (!safeEqual(sig, expected)) return false;
   const [user] = payload.split(':');
-  return Boolean(user);
+  return user === ADMIN_USER;
 }
