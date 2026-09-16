@@ -17,7 +17,7 @@ import { MobileFilters } from '@/components/MobileFilters';
 export const metadata = { title: 'Tienda' };
 export const dynamic = 'force-dynamic';
 
-const PER_PAGE = 24;
+const PER_PAGE = 10;
 
 interface ShopParams {
   q?: string;

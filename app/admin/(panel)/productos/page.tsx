@@ -7,7 +7,7 @@ import { Pagination } from '@/components/Pagination';
 
 export const dynamic = 'force-dynamic';
 
-const PER_PAGE = 20;
+const PER_PAGE = 10;
 
 export default async function AdminProductos({
   searchParams,

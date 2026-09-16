@@ -12,7 +12,7 @@ import { ProductGrid } from '@/components/ProductGrid';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Pagination } from '@/components/Pagination';
 
-const PER_PAGE = 24;
+const PER_PAGE = 10;
 
 export const dynamic = 'force-dynamic';
 
