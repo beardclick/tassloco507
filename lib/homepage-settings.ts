@@ -21,6 +21,14 @@ export interface HomepageSettings {
   stickers: string[];
   topLeftBadge: string;
   bottomRightBadge: string;
+  categoriesTag: string;
+  categoriesTitle: string;
+  autopartsTag: string;
+  autopartsTitle: string;
+  streetwearTag: string;
+  streetwearTitle: string;
+  featuredTag: string;
+  featuredTitle: string;
   marqueeItems: string[];
   marqueeSpeedDesktop: number;
   marqueeSpeedMobile: number;
@@ -50,6 +58,14 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   stickers: ['ENVÍOS A TODO PANAMÁ', 'STREET · RACING', '#TASSLOCO507'],
   topLeftBadge: 'Fresh 🔥',
   bottomRightBadge: 'Panamá 507',
+  categoriesTag: 'Categorías',
+  categoriesTitle: '¿Qué buscas?',
+  autopartsTag: 'Auto Parts',
+  autopartsTitle: 'Piezas & Racing',
+  streetwearTag: 'Streetwear',
+  streetwearTitle: 'Ropa & Gorras',
+  featuredTag: 'Lo más nuevo',
+  featuredTitle: 'Recién llegado',
   marqueeSpeedDesktop: 32,
   marqueeSpeedMobile: 22,
   quoteTitle: '¿No encuentras tu pieza?',
@@ -109,6 +125,14 @@ function cleanSettings(value: Partial<HomepageSettings>): HomepageSettings {
     stickers: stickers.length > 0 ? stickers : DEFAULT_HOMEPAGE_SETTINGS.stickers,
     topLeftBadge: text('topLeftBadge'),
     bottomRightBadge: text('bottomRightBadge'),
+    categoriesTag: text('categoriesTag'),
+    categoriesTitle: text('categoriesTitle'),
+    autopartsTag: text('autopartsTag'),
+    autopartsTitle: text('autopartsTitle'),
+    streetwearTag: text('streetwearTag'),
+    streetwearTitle: text('streetwearTitle'),
+    featuredTag: text('featuredTag'),
+    featuredTitle: text('featuredTitle'),
     marqueeItems:
       marqueeItems.length > 0 ? marqueeItems : DEFAULT_HOMEPAGE_SETTINGS.marqueeItems,
     marqueeSpeedDesktop: speed('marqueeSpeedDesktop'),

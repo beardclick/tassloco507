@@ -125,8 +125,8 @@ export default async function HomePage() {
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <span className="tag tag--red">Categorías</span>
-              <h2 className="section-title" style={{ marginTop: 12 }}>¿Qué buscas?</h2>
+              <span className="tag tag--red">{homepage.categoriesTag}</span>
+              <h2 className="section-title" style={{ marginTop: 12 }}>{homepage.categoriesTitle}</h2>
             </div>
             <Link href="/shop" className="btn btn--ghost">
               Ver todo <ArrowRightIcon style={{ width: 16, height: 16 }} />
@@ -161,8 +161,8 @@ export default async function HomePage() {
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <span className="tag">Auto Parts</span>
-              <h2 className="section-title" style={{ marginTop: 12 }}>Piezas & Racing</h2>
+              <span className="tag">{homepage.autopartsTag}</span>
+              <h2 className="section-title" style={{ marginTop: 12 }}>{homepage.autopartsTitle}</h2>
             </div>
             <Link href="/categoria-producto/auto-parts" className="btn btn--red">
               Ver Auto Parts <ArrowRightIcon style={{ width: 16, height: 16 }} />
@@ -177,8 +177,8 @@ export default async function HomePage() {
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
             <div>
-              <span className="tag tag--red">Streetwear</span>
-              <h2 className="section-title" style={{ marginTop: 12 }}>Ropa & Gorras</h2>
+              <span className="tag tag--red">{homepage.streetwearTag}</span>
+              <h2 className="section-title" style={{ marginTop: 12 }}>{homepage.streetwearTitle}</h2>
             </div>
             <Link href="/categoria-producto/gorras-snapbacks" className="btn btn--black">
               Ver Ropa <ArrowRightIcon style={{ width: 16, height: 16 }} />
@@ -192,8 +192,8 @@ export default async function HomePage() {
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container">
           <div style={{ marginBottom: 28 }}>
-            <span className="tag">Lo más nuevo</span>
-            <h2 className="section-title" style={{ marginTop: 12 }}>Recién llegado</h2>
+            <span className="tag">{homepage.featuredTag}</span>
+            <h2 className="section-title" style={{ marginTop: 12 }}>{homepage.featuredTitle}</h2>
           </div>
           <ProductGrid products={featured} />
         </div>

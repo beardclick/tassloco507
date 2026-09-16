@@ -101,6 +101,18 @@ export function HomepageSettingsForm({ settings }: { settings: HomepageSettings 
         <TextField id="secondary-href" label="Enlace secundario" value={content.secondaryButtonHref} onChange={(value) => setText('secondaryButtonHref', value)} />
       </div>
 
+      <h2 className="admin-card__title homepage-settings__section">Secciones de categorías</h2>
+      <div className="form-grid">
+        <TextField id="categories-tag" label="Etiqueta — Categorías" value={content.categoriesTag} onChange={(value) => setText('categoriesTag', value)} />
+        <TextField id="categories-title" label="Título — Categorías" value={content.categoriesTitle} onChange={(value) => setText('categoriesTitle', value)} />
+        <TextField id="autoparts-tag" label="Etiqueta — Auto Parts" value={content.autopartsTag} onChange={(value) => setText('autopartsTag', value)} />
+        <TextField id="autoparts-title" label="Título — Auto Parts" value={content.autopartsTitle} onChange={(value) => setText('autopartsTitle', value)} />
+        <TextField id="streetwear-tag" label="Etiqueta — Ropa & Gorras" value={content.streetwearTag} onChange={(value) => setText('streetwearTag', value)} />
+        <TextField id="streetwear-title" label="Título — Ropa & Gorras" value={content.streetwearTitle} onChange={(value) => setText('streetwearTitle', value)} />
+        <TextField id="featured-tag" label="Etiqueta — Recién llegado" value={content.featuredTag} onChange={(value) => setText('featuredTag', value)} />
+        <TextField id="featured-title" label="Título — Recién llegado" value={content.featuredTitle} onChange={(value) => setText('featuredTitle', value)} />
+      </div>
+
       <h2 className="admin-card__title homepage-settings__section">Marquee</h2>
       <div className="form-field">
         <label htmlFor="marquee-items">Contenido del marquee</label>
