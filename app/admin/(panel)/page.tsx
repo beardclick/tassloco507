@@ -6,7 +6,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const products = await getProducts();
+  const products = await getProducts(true);
   const orders = await getOrders();
   const pending = orders.filter((o) => o.status === 'pendiente').length;
   const revenue = orders

@@ -46,6 +46,8 @@ export interface Product {
   images: ProductImage[];
   categories: ProductCategory[];
   tags: string[];
+  draft?: boolean;
+  createdAt?: string;
 }
 
 export interface Category {

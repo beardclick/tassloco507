@@ -1,0 +1,29 @@
+{
+  "heroImage": "https://adgmizcnlusgxbflengu.supabase.co/storage/v1/object/public/product-images/1789571556278-c2114912.jpeg",
+  "eyebrowTag": "🇵🇦 PANAMÁ",
+  "eyebrowText": "Street Shop",
+  "titleFirst": "TASS",
+  "titleAccent": "LOCO",
+  "titleLast": "507",
+  "tagline": "Fashion · Car · Accesorios",
+  "description": "Todo para tu ride y ropa con flow.",
+  "primaryButtonLabel": "Ver tienda",
+  "primaryButtonHref": "/shop",
+  "secondaryButtonLabel": "Auto Parts",
+  "secondaryButtonHref": "/categoria-producto/auto-parts",
+  "stickers": [
+    "ENVÍOS A TODO PANAMÁ",
+    "AUTOS · FLOW",
+    "#TASSLOCO507"
+  ],
+  "topLeftBadge": "Fresh 🔥",
+  "bottomRightBadge": "Panamá 507",
+  "marqueeItems": [
+    "FASHION",
+    "CAR",
+    "ENVÍOS A TODO PANAMÁ",
+    "PIEZAS DE AUTO",
+    "ROPA STREETWEAR",
+    "TASS LOCO 507"
+  ]
+}

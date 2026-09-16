@@ -10,12 +10,12 @@ import { Marquee } from '@/components/Marquee';
 import { ProductGrid } from '@/components/ProductGrid';
 import { ArrowRightIcon, CashIcon, ShieldIcon, TruckIcon, WhatsappIcon } from '@/components/Icons';
 import { SITE } from '@/lib/site';
-
-const HERO_IMG = 'https://tassloco507.com/wp-content/uploads/2020/06/banner-tass-loco-1-1024x576.jpeg';
+import { getHomepageSettings } from '@/lib/homepage-settings';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
+  const homepage = await getHomepageSettings();
   const roots = await categoryTree();
   const featured = await featuredProducts(4);
   const autoParts = await getCategoryByPath(['auto-parts']);
@@ -36,57 +36,55 @@ export default async function HomePage() {
         <div className="container hero__inner">
           <div>
             <span className="hero__eyebrow">
-              <span className="tag tag--red">🇵🇦 PANAMÁ</span> Street Shop
+              <span className="tag tag--red">{homepage.eyebrowTag}</span> {homepage.eyebrowText}
             </span>
             <h1 className="hero__title">
-              TASS <span className="loco">LOCO</span>
+              {homepage.titleFirst} <span className="loco">{homepage.titleAccent}</span>
               <br />
-              <span className="outline">507</span>
+              <span className="outline">{homepage.titleLast}</span>
             </h1>
             <p className="hero__tagline">
-              <b>Fashion</b> · <b>Car</b> · <b>Racing</b>
+              {homepage.tagline.split('·').map((part, index, parts) => (
+                <span key={`${part}-${index}`}>
+                  <b>{part.trim()}</b>{index < parts.length - 1 ? ' · ' : ''}
+                </span>
+              ))}
             </p>
             <p className="lead" style={{ maxWidth: 460 }}>
-              Piezas de auto, accesorios racing y ropa con flow. Todo para tu ride, directo a
-              Panamá.
+              {homepage.description}
             </p>
             <div className="hero__cta">
-              <Link href="/shop" className="btn btn--black btn--lg">
-                Ver tienda <ArrowRightIcon style={{ width: 18, height: 18 }} />
+              <Link href={homepage.primaryButtonHref} className="btn btn--black btn--lg">
+                {homepage.primaryButtonLabel} <ArrowRightIcon style={{ width: 18, height: 18 }} />
               </Link>
-              <Link href="/categoria-producto/auto-parts" className="btn btn--red btn--lg">
-                Auto Parts
+              <Link href={homepage.secondaryButtonHref} className="btn btn--red btn--lg">
+                {homepage.secondaryButtonLabel}
               </Link>
             </div>
             <div className="hero__stickers">
-              <span className="sticker sticker--tilt">ENVÍOS A TODO PANAMÁ</span>
-              <span className="sticker sticker--red sticker--tilt2">STREET · RACING</span>
-              <span className="sticker sticker--tilt">#TASSLOCO507</span>
+              {homepage.stickers.map((sticker, index) => (
+                <span
+                  className={`sticker ${index % 2 === 1 ? 'sticker--red sticker--tilt2' : 'sticker--tilt'}`}
+                  key={`${sticker}-${index}`}
+                >
+                  {sticker}
+                </span>
+              ))}
             </div>
           </div>
 
           <div className="hero__visual">
             <div className="hero__frame">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={HERO_IMG} alt="Tass Loco 507 — Fashion Car Racing" />
+              <img src={homepage.heroImage} alt="Tass Loco 507" />
             </div>
-            <span className="hero__corner hero__corner--tl">Fresh 🔥</span>
-            <span className="hero__corner hero__corner--br">Panamá 507</span>
+            <span className="hero__corner hero__corner--tl">{homepage.topLeftBadge}</span>
+            <span className="hero__corner hero__corner--br">{homepage.bottomRightBadge}</span>
           </div>
         </div>
       </section>
 
-      <Marquee
-        items={[
-          'FASHION',
-          'CAR',
-          'RACING',
-          'ENVÍOS A TODO PANAMÁ',
-          'PIEZAS DE AUTO',
-          'ROPA STREETWEAR',
-          'TASS LOCO 507',
-        ]}
-      />
+      <Marquee items={homepage.marqueeItems} />
 
       {/* FEATURES */}
       <section className="features">

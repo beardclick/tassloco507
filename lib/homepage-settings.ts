@@ -1,0 +1,107 @@
+import 'server-only';
+
+import { readFile, rename, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+export interface HomepageSettings {
+  heroImage: string;
+  eyebrowTag: string;
+  eyebrowText: string;
+  titleFirst: string;
+  titleAccent: string;
+  titleLast: string;
+  tagline: string;
+  description: string;
+  primaryButtonLabel: string;
+  primaryButtonHref: string;
+  secondaryButtonLabel: string;
+  secondaryButtonHref: string;
+  stickers: string[];
+  topLeftBadge: string;
+  bottomRightBadge: string;
+  marqueeItems: string[];
+}
+
+export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
+  heroImage:
+    'https://tassloco507.com/wp-content/uploads/2020/06/banner-tass-loco-1-1024x576.jpeg',
+  eyebrowTag: '🇵🇦 PANAMÁ',
+  eyebrowText: 'Street Shop',
+  titleFirst: 'TASS',
+  titleAccent: 'LOCO',
+  titleLast: '507',
+  tagline: 'Fashion · Car · Racing',
+  description:
+    'Piezas de auto, accesorios racing y ropa con flow. Todo para tu ride, en todo Panamá.',
+  primaryButtonLabel: 'Ver tienda',
+  primaryButtonHref: '/shop',
+  secondaryButtonLabel: 'Auto Parts',
+  secondaryButtonHref: '/categoria-producto/auto-parts',
+  stickers: ['ENVÍOS A TODO PANAMÁ', 'STREET · RACING', '#TASSLOCO507'],
+  topLeftBadge: 'Fresh 🔥',
+  bottomRightBadge: 'Panamá 507',
+  marqueeItems: [
+    'FASHION',
+    'CAR',
+    'RACING',
+    'ENVÍOS A TODO PANAMÁ',
+    'PIEZAS DE AUTO',
+    'ROPA STREETWEAR',
+    'TASS LOCO 507',
+  ],
+};
+
+const settingsPath = path.join(process.cwd(), 'data', 'homepage.json');
+
+function cleanSettings(value: Partial<HomepageSettings>): HomepageSettings {
+  const heroImage = String(value.heroImage ?? '').trim();
+  const text = <K extends keyof HomepageSettings>(key: K) => {
+    const cleaned = String(value[key] ?? '').trim();
+    return cleaned || String(DEFAULT_HOMEPAGE_SETTINGS[key]);
+  };
+  const stickers = Array.isArray(value.stickers)
+    ? value.stickers.map((item) => String(item).trim()).filter(Boolean).slice(0, 6)
+    : [];
+  const marqueeItems = Array.isArray(value.marqueeItems)
+    ? value.marqueeItems.map((item) => String(item).trim()).filter(Boolean).slice(0, 20)
+    : [];
+
+  return {
+    heroImage: heroImage || DEFAULT_HOMEPAGE_SETTINGS.heroImage,
+    eyebrowTag: text('eyebrowTag'),
+    eyebrowText: text('eyebrowText'),
+    titleFirst: text('titleFirst'),
+    titleAccent: text('titleAccent'),
+    titleLast: text('titleLast'),
+    tagline: text('tagline'),
+    description: text('description'),
+    primaryButtonLabel: text('primaryButtonLabel'),
+    primaryButtonHref: text('primaryButtonHref'),
+    secondaryButtonLabel: text('secondaryButtonLabel'),
+    secondaryButtonHref: text('secondaryButtonHref'),
+    stickers: stickers.length > 0 ? stickers : DEFAULT_HOMEPAGE_SETTINGS.stickers,
+    topLeftBadge: text('topLeftBadge'),
+    bottomRightBadge: text('bottomRightBadge'),
+    marqueeItems:
+      marqueeItems.length > 0 ? marqueeItems : DEFAULT_HOMEPAGE_SETTINGS.marqueeItems,
+  };
+}
+
+export async function getHomepageSettings(): Promise<HomepageSettings> {
+  try {
+    const raw = await readFile(settingsPath, 'utf8');
+    return cleanSettings(JSON.parse(raw) as Partial<HomepageSettings>);
+  } catch {
+    return DEFAULT_HOMEPAGE_SETTINGS;
+  }
+}
+
+export async function saveHomepageSettings(
+  value: Partial<HomepageSettings>,
+): Promise<HomepageSettings> {
+  const settings = cleanSettings(value);
+  const temporaryPath = `${settingsPath}.tmp`;
+  await writeFile(temporaryPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
+  await rename(temporaryPath, settingsPath);
+  return settings;
+}

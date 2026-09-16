@@ -15,10 +15,10 @@ export async function Footer() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={SITE.logo} alt="Tass Loco 507" style={{ height: 64, marginBottom: 12 }} />
           <p>
-            <strong>{SITE.tagline}</strong>
+            <strong>Fashion. Car.</strong>
           </p>
           <p>
-            Piezas de auto, accesorios racing y ropa streetwear. Hecho en Panamá con actitud
+            Piezas de auto, accesorios y ropa streetwear. Hecho en Panamá con actitud
             <em> loca</em> por los carros.
           </p>
           <div className="footer__social">
@@ -66,7 +66,7 @@ export async function Footer() {
             <WhatsappIcon style={{ width: 16, height: 16, color: 'var(--red)' }} /> {SITE.whatsapp}
           </p>
           <p>Panamá 🇵🇦</p>
-          <div className="tag tag--red" style={{ marginTop: 10 }}>Fashion · Car · Racing</div>
+          <div className="tag tag--red" style={{ marginTop: 10 }}>Fashion · Car</div>
         </div>
       </div>
 

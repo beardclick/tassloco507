@@ -2,22 +2,40 @@ import Link from 'next/link';
 import { getProducts } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
 import { DeleteProductButton } from '@/components/admin/DeleteProductButton';
+import { flattenCategories } from '@/lib/admin';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminProductos({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; sort?: string; status?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, category, sort = 'date-desc', status = 'all' } = await searchParams;
   const query = (q ?? '').toLowerCase().trim();
-  let products = await getProducts();
+  const categories = await flattenCategories();
+  let products = await getProducts(true);
   if (query) {
     products = products.filter((p) =>
       `${p.name} ${p.sku}`.toLowerCase().includes(query),
     );
   }
+  if (category) {
+    const categoryId = Number(category);
+    products = products.filter((product) =>
+      product.categories.some((productCategory) => productCategory.id === categoryId),
+    );
+  }
+  if (status === 'published') products = products.filter((product) => !product.draft);
+  if (status === 'draft') products = products.filter((product) => product.draft);
+
+  products.sort((a, b) => {
+    if (sort === 'az') return a.name.localeCompare(b.name, 'es');
+    if (sort === 'za') return b.name.localeCompare(a.name, 'es');
+    const aDate = a.createdAt ? Date.parse(a.createdAt) : a.id;
+    const bDate = b.createdAt ? Date.parse(b.createdAt) : b.id;
+    return sort === 'date-asc' ? aDate - bDate : bDate - aDate;
+  });
 
   return (
     <div>
@@ -30,17 +48,37 @@ export default async function AdminProductos({
         </Link>
       </div>
 
-      <form style={{ display: 'flex', gap: 8, marginBottom: 16, maxWidth: 420 }}>
+      <form className="admin-product-filters">
         <input
           name="q"
           defaultValue={q ?? ''}
           placeholder="Buscar producto o SKU…"
           aria-label="Buscar producto"
-          style={{ flex: 1, padding: '11px 14px', border: '2px solid var(--black)', borderRadius: 10 }}
+          className="admin-filter-input"
         />
+        <select name="category" defaultValue={category ?? ''} aria-label="Filtrar por categoría">
+          <option value="">Todas las categorías</option>
+          {categories.map((item) => (
+            <option key={item.id} value={item.id}>
+              {'— '.repeat(item.depth)}{item.name}
+            </option>
+          ))}
+        </select>
+        <select name="status" defaultValue={status} aria-label="Filtrar por estado">
+          <option value="all">Todos los estados</option>
+          <option value="published">Publicados</option>
+          <option value="draft">Borradores</option>
+        </select>
+        <select name="sort" defaultValue={sort} aria-label="Ordenar productos">
+          <option value="date-desc">Más recientes</option>
+          <option value="date-asc">Más antiguos</option>
+          <option value="az">Nombre A–Z</option>
+          <option value="za">Nombre Z–A</option>
+        </select>
         <button className="btn btn--black" type="submit">
-          Buscar
+          Aplicar
         </button>
+        <Link href="/admin/productos" className="btn btn--ghost">Limpiar</Link>
       </form>
 
       <div className="admin-card">
@@ -73,6 +111,7 @@ export default async function AdminProductos({
                           {p.name}
                         </Link>
                         {p.sku && <div className="admin-muted">SKU: {p.sku}</div>}
+                        {p.draft && <span className="admin-status admin-status--draft">Borrador</span>}
                       </div>
                     </div>
                   </td>
@@ -102,7 +141,7 @@ export default async function AdminProductos({
           </table>
         )}
         <p className="admin-muted" style={{ marginTop: 12 }}>
-          {products.length} producto{products.length === 1 ? '' : 's'}
+          {products.length} producto{products.length === 1 ? '' : 's'} mostrado{products.length === 1 ? '' : 's'}
         </p>
       </div>
     </div>

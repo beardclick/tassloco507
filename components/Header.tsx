@@ -43,7 +43,6 @@ export function Header({ nav }: { nav: NavItem[] }) {
       <div className="topbar">
         <div className="topbar__inner">
           <span className="dot">●</span> ENVÍOS A TODO PANAMÁ
-          <span className="dot">●</span> FASHION · CAR · RACING
           <a
             href={SITE.whatsappLink}
             target="_blank"
@@ -64,7 +63,7 @@ export function Header({ nav }: { nav: NavItem[] }) {
               <span className="logo__name">
                 Tass Loco <span>507</span>
               </span>
-              <span className="logo__sub">Fashion · Car · Racing</span>
+              <span className="logo__sub">Fashion car accesorios</span>
             </span>
           </Link>
 
@@ -121,7 +120,7 @@ export function Header({ nav }: { nav: NavItem[] }) {
                   <span className="logo__name">
                     Tass Loco <span>507</span>
                   </span>
-                  <span className="logo__sub">Fashion · Car · Racing</span>
+                  <span className="logo__sub">Fashion car accesorios</span>
                 </span>
               </Link>
               <button className="icon-btn" onClick={() => setMenuOpen(false)} aria-label="Cerrar menú">

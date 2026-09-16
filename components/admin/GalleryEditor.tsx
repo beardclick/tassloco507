@@ -69,6 +69,16 @@ export function GalleryEditor({
 
       <div
         className={`gallery-drop ${dragging ? 'gallery-drop--over' : ''}`}
+        role="button"
+        tabIndex={0}
+        onClick={(e) => {
+          if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'P') {
+            fileRef.current?.click();
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click();
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setDragging(true);
@@ -83,7 +93,7 @@ export function GalleryEditor({
       >
         <p>{uploading ? 'Subiendo…' : 'Arrastra imágenes aquí, haz clic o elige de la galería'}</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" className="btn btn--black btn--sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <button type="button" className="btn btn--black btn--sm" onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }} disabled={uploading}>
             Subir imagen
           </button>
           <input
@@ -96,7 +106,7 @@ export function GalleryEditor({
               e.target.value = '';
             }}
           />
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setMediaOpen(true)}>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={(e) => { e.stopPropagation(); setMediaOpen(true); }}>
             Galería de medios
           </button>
         </div>

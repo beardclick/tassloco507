@@ -1,6 +1,7 @@
 import { getSupabase } from './supabase';
 import type { Category, Product, ProductCategory, Prices } from './catalog';
 import type { OrderStatus } from './order';
+import { getProductMetaMap, removeProductMeta, setProductMeta } from './product-meta';
 
 export type { OrderStatus };
 export { ORDER_STATUSES } from './order';
@@ -61,6 +62,7 @@ export interface ProductInput {
   images?: string[];
   categoryIds?: number[];
   tags?: string;
+  draft?: boolean;
 }
 
 export interface CategoryInput {
@@ -261,22 +263,38 @@ export async function deleteCategory(id: number): Promise<boolean> {
 
 // ---- Products ----
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(includeDrafts = false): Promise<Product[]> {
   const { data, error } = await sb().from('products').select('*').order('id', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Product[];
+  const meta = await getProductMetaMap();
+  const products = ((data ?? []) as Product[]).map((product) => ({
+    ...product,
+    draft: meta[String(product.id)]?.draft ?? false,
+    createdAt: meta[String(product.id)]?.createdAt,
+  }));
+  return includeDrafts ? products : products.filter((product) => !product.draft);
 }
 
 export async function getProductById(id: number): Promise<Product | undefined> {
   const { data, error } = await sb().from('products').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
-  return (data as Product) ?? undefined;
+  if (!data) return undefined;
+  const meta = await getProductMetaMap();
+  return {
+    ...(data as Product),
+    draft: meta[String(id)]?.draft ?? false,
+    createdAt: meta[String(id)]?.createdAt,
+  };
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   const { data, error } = await sb().from('products').select('*').eq('slug', slug).maybeSingle();
   if (error) throw error;
-  return (data as Product) ?? undefined;
+  if (!data) return undefined;
+  const product = data as Product;
+  const meta = await getProductMetaMap();
+  if (meta[String(product.id)]?.draft) return undefined;
+  return { ...product, draft: false, createdAt: meta[String(product.id)]?.createdAt };
 }
 
 export async function createProduct(input: ProductInput, categories: ProductCategory[]): Promise<Product> {
@@ -302,7 +320,9 @@ export async function createProduct(input: ProductInput, categories: ProductCate
   };
   const { error } = await sb().from('products').insert(product);
   if (error) throw error;
-  return product;
+  const createdAt = new Date().toISOString();
+  await setProductMeta(id, { draft: Boolean(input.draft), createdAt });
+  return { ...product, draft: Boolean(input.draft), createdAt };
 }
 
 export async function updateProduct(
@@ -326,14 +346,20 @@ export async function updateProduct(
     categories,
     tags: (input.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
   };
-  const { error } = await sb().from('products').update(updated).eq('id', id);
+  const { draft: _draft, createdAt: _createdAt, ...productRow } = updated;
+  const { error } = await sb().from('products').update(productRow).eq('id', id);
   if (error) throw error;
-  return updated;
+  await setProductMeta(id, {
+    draft: Boolean(input.draft),
+    createdAt: prev.createdAt ?? new Date().toISOString(),
+  });
+  return { ...updated, draft: Boolean(input.draft), createdAt: prev.createdAt };
 }
 
 export async function deleteProduct(id: number): Promise<boolean> {
   const { error, count } = await sb().from('products').delete({ count: 'exact' }).eq('id', id);
   if (error) throw error;
+  if ((count ?? 0) > 0) await removeProductMeta(id);
   return (count ?? 0) > 0;
 }
 

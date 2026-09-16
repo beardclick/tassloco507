@@ -53,6 +53,7 @@ export function parseProductInput(body: any): ProductInput {
     regularPrice: regularPrice && Number.isFinite(regularPrice) ? regularPrice : undefined,
     onSale: Boolean(body.onSale),
     inStock: body.inStock !== false,
+    draft: Boolean(body.draft),
     sku: String(body.sku ?? '').trim(),
     shortDescription: String(body.shortDescription ?? '').trim(),
     description: String(body.description ?? '').trim(),

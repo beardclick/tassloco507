@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Category } from '@/lib/catalog';
 import type { CategoryOption } from '@/lib/admin';
+import { ImagePicker } from './ImagePicker';
 
 export function CategoryForm({
   category,
@@ -69,14 +70,9 @@ export function CategoryForm({
               ))}
           </select>
         </div>
-        <div className="form-field">
-          <label htmlFor="cat-image">Imagen (URL)</label>
-          <input
-            id="cat-image"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="https://…"
-          />
+        <div className="form-field form-field--full">
+          <label>Imagen de la categoría</label>
+          <ImagePicker value={image} onChange={setImage} />
         </div>
         <div className="form-field form-field--full">
           <label htmlFor="cat-desc">Descripción</label>

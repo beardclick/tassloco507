@@ -27,6 +27,7 @@ export function ProductForm({
   );
   const [onSale, setOnSale] = useState(product?.on_sale ?? false);
   const [inStock, setInStock] = useState(product?.in_stock ?? true);
+  const [draft, setDraft] = useState(product?.draft ?? false);
   const [sku, setSku] = useState(product?.sku ?? '');
   const [images, setImages] = useState<string[]>(
     product ? product.images.map((i) => i.src) : [],
@@ -56,6 +57,7 @@ export function ProductForm({
       regularPrice: regularPrice ? Number(regularPrice) : undefined,
       onSale,
       inStock,
+      draft,
       sku,
       images,
       shortDescription,
@@ -145,6 +147,14 @@ export function ProductForm({
                 onChange={(e) => setInStock(e.target.checked)}
               />
               En stock
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={draft}
+                onChange={(e) => setDraft(e.target.checked)}
+              />
+              Borrador (ocultar de la tienda)
             </label>
           </div>
 
