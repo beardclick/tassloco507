@@ -15,7 +15,7 @@ interface ItemEdit {
   image: string | null;
 }
 
-export function OrderEditForm({ order }: { order: Order }) {
+export function OrderEditForm({ order, onCancel }: { order: Order; onCancel?: () => void }) {
   const router = useRouter();
   const [customer, setCustomer] = useState(order.customer);
   const [delivery, setDelivery] = useState(order.delivery);
@@ -88,6 +88,7 @@ export function OrderEditForm({ order }: { order: Order }) {
       const data = await res.json();
       if (res.ok && data.ok) {
         router.refresh();
+        onCancel?.();
       } else {
         setError(data.error || 'No se pudo guardar');
       }
@@ -268,9 +269,16 @@ export function OrderEditForm({ order }: { order: Order }) {
 
       {error && <p className="admin-login__error" style={{ marginTop: 12 }}>{error}</p>}
 
-      <button className="btn btn--red btn--lg" style={{ marginTop: 20 }} onClick={save} disabled={saving}>
-        {saving ? 'Guardando…' : 'Guardar cambios'}
-      </button>
+      <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+        <button className="btn btn--red btn--lg" onClick={save} disabled={saving}>
+          {saving ? 'Guardando…' : 'Guardar cambios'}
+        </button>
+        {onCancel && (
+          <button type="button" className="btn btn--ghost btn--lg" onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+      </div>
     </div>
   );
 }

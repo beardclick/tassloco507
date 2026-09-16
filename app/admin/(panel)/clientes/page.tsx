@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getCustomers, getOrders } from '@/lib/db';
+import { formatDate } from '@/lib/dates';
 import { DeleteCustomerButton } from '@/components/admin/DeleteCustomerButton';
 
 export const dynamic = 'force-dynamic';
@@ -43,7 +44,7 @@ export default async function AdminClientes() {
                   <td>{c.email}</td>
                   <td className="admin-muted">{c.telefono || '—'}</td>
                   <td>{orderCount(c.email)}</td>
-                  <td className="admin-muted">{new Date(c.createdAt).toLocaleDateString('es-PA')}</td>
+                  <td className="admin-muted">{formatDate(c.createdAt)}</td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <Link href={`/admin/clientes/${c.id}`} className="admin-link">
                       Editar

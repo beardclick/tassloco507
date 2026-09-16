@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { currentCustomer } from '@/lib/customer-auth';
 import { getCustomerByEmail, getOrders } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
+import { formatDate } from '@/lib/dates';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { CustomerLogoutButton } from '@/components/CustomerLogoutButton';
 
@@ -75,7 +76,7 @@ export default async function MyAccountPage() {
                   {orders.map((o) => (
                     <tr key={o.id}>
                       <td>{o.number}</td>
-                      <td>{new Date(o.createdAt).toLocaleDateString('es-PA')}</td>
+                      <td>{formatDate(o.createdAt)}</td>
                       <td>{formatMoney(o.total)}</td>
                       <td>
                         <StatusBadge status={o.status} />

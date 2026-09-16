@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrderById } from '@/lib/db';
+import { formatDateTime } from '@/lib/dates';
 import { StatusBadge } from '@/components/admin/StatusBadge';
-import { OrderEditForm } from '@/components/admin/OrderEditForm';
+import { OrderDetail } from '@/components/admin/OrderDetail';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,14 +27,14 @@ export default async function PedidoDetallePage({
             Pedido {order.number}
           </h1>
           <p className="admin-muted" style={{ margin: '2px 0 0' }}>
-            {new Date(order.createdAt).toLocaleString('es-PA')} ·{' '}
+            {formatDateTime(order.createdAt)} ·{' '}
             {order.payment.method === 'transferencia' ? 'Transferencia' : 'Efectivo'}
           </p>
         </div>
         <StatusBadge status={order.status} />
       </div>
 
-      <OrderEditForm order={order} />
+      <OrderDetail order={order} />
     </div>
   );
 }

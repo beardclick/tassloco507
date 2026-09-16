@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getOrders, getProducts } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
+import { formatDateTime } from '@/lib/dates';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 
 export const dynamic = 'force-dynamic';
@@ -64,7 +65,7 @@ export default async function AdminDashboard() {
                       {o.number}
                     </Link>
                   </td>
-                  <td>{new Date(o.createdAt).toLocaleString('es-PA')}</td>
+                  <td>{formatDateTime(o.createdAt)}</td>
                   <td>{o.customer.nombre}</td>
                   <td>{formatMoney(o.total)}</td>
                   <td>

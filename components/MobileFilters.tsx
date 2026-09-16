@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { SearchBar } from './SearchBar';
 import { SortSelect } from './SortSelect';
 import { CloseIcon } from './Icons';
 
@@ -36,8 +35,6 @@ export function MobileFilters({
               </button>
             </div>
             <div className="filter-drawer__body">
-              <SearchBar initialValue={q} placeholder="Buscar en la tienda…" onDone={() => setOpen(false)} />
-
               <div>
                 <h4>Categorías</h4>
                 <div className="filter-drawer__list">

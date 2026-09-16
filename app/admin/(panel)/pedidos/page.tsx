@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getOrders } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
+import { formatDateTime } from '@/lib/dates';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Pagination } from '@/components/Pagination';
 
@@ -54,7 +55,7 @@ export default async function AdminPedidos({
                       {o.number}
                     </Link>
                   </td>
-                  <td>{new Date(o.createdAt).toLocaleString('es-PA')}</td>
+                  <td>{formatDateTime(o.createdAt)}</td>
                   <td>{o.customer.nombre}</td>
                   <td className="admin-muted">{o.customer.telefono}</td>
                   <td className="admin-muted">

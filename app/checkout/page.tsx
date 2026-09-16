@@ -16,6 +16,8 @@ export default function CheckoutPage() {
   const [placed, setPlaced] = useState<{ order: string; paymentId: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [createAccount, setCreateAccount] = useState(false);
+  const [loginRequired, setLoginRequired] = useState(false);
 
   const activePayment = PAYMENT_METHODS.find((p) => p.id === payment) ?? PAYMENT_METHODS[0];
 
@@ -23,6 +25,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
+    setLoginRequired(false);
     const fd = new FormData(e.currentTarget as HTMLFormElement);
     const payload = {
       customer: {
@@ -47,6 +50,8 @@ export default function CheckoutPage() {
         image: i.image,
       })),
       subtotal,
+      createAccount,
+      password: String(fd.get('password') ?? ''),
     };
     try {
       const res = await fetch('/api/orders', {
@@ -60,6 +65,7 @@ export default function CheckoutPage() {
         clear();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
+        setLoginRequired(data.code === 'LOGIN_REQUIRED');
         setError(data.error || 'No se pudo procesar el pedido');
       }
     } catch {
@@ -177,6 +183,26 @@ export default function CheckoutPage() {
                   <label htmlFor="tel">Teléfono / WhatsApp</label>
                   <input id="tel" name="tel" type="tel" required placeholder="+507 6XXX-XXXX" />
                 </div>
+                <div className="form-field form-field--full">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontWeight: 'normal' }}>
+                    <input
+                      type="checkbox"
+                      name="createAccount"
+                      checked={createAccount}
+                      onChange={(e) => setCreateAccount(e.target.checked)}
+                    />
+                    Crear una cuenta (para seguir tus pedidos)
+                  </label>
+                  {createAccount && (
+                    <input
+                      type="password"
+                      name="password"
+                      minLength={6}
+                      placeholder="Contraseña (mín. 6 caracteres)"
+                      style={{ marginTop: 8 }}
+                    />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -267,7 +293,16 @@ export default function CheckoutPage() {
               ))}
             </div>
 
-            {error && <p className="admin-login__error">{error}</p>}
+            {error && (
+              <div>
+                <p className="admin-login__error">{error}</p>
+                {loginRequired && (
+                  <Link href="/login" className="btn btn--black btn--sm" style={{ marginTop: 8 }}>
+                    Iniciar sesión
+                  </Link>
+                )}
+              </div>
+            )}
             <button type="submit" className="btn btn--red btn--block btn--lg" disabled={submitting}>
               {submitting ? 'Enviando…' : `Confirmar pedido · ${formatMoney(subtotal)}`}
             </button>
