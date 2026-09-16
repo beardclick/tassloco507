@@ -2,6 +2,7 @@ import 'server-only';
 
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { getSupabase, STORAGE_BUCKET } from '@/lib/supabase';
 
 export interface HomepageSettings {
   heroImage: string;
@@ -52,6 +53,11 @@ export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
 };
 
 const settingsPath = path.join(process.cwd(), 'data', 'homepage.json');
+const remoteSettingsPath = 'settings/homepage.json';
+
+function hasSupabaseConfig(): boolean {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
 
 function cleanSettings(value: Partial<HomepageSettings>): HomepageSettings {
   const heroImage = String(value.heroImage ?? '').trim();
@@ -88,6 +94,16 @@ function cleanSettings(value: Partial<HomepageSettings>): HomepageSettings {
 }
 
 export async function getHomepageSettings(): Promise<HomepageSettings> {
+  if (hasSupabaseConfig()) {
+    try {
+      const { data, error } = await getSupabase().storage
+        .from(STORAGE_BUCKET)
+        .download(remoteSettingsPath);
+      if (!error && data) return cleanSettings(JSON.parse(await data.text()) as Partial<HomepageSettings>);
+    } catch {
+      // Durante el primer despliegue todavía puede no existir el objeto remoto.
+    }
+  }
   try {
     const raw = await readFile(settingsPath, 'utf8');
     return cleanSettings(JSON.parse(raw) as Partial<HomepageSettings>);
@@ -100,6 +116,15 @@ export async function saveHomepageSettings(
   value: Partial<HomepageSettings>,
 ): Promise<HomepageSettings> {
   const settings = cleanSettings(value);
+  if (hasSupabaseConfig()) {
+    const { error } = await getSupabase().storage.from(STORAGE_BUCKET).upload(
+      remoteSettingsPath,
+      JSON.stringify(settings),
+      { upsert: true, contentType: 'application/json', cacheControl: '0' },
+    );
+    if (error) throw new Error(`No se pudo guardar la configuración: ${error.message}`);
+    return settings;
+  }
   const temporaryPath = `${settingsPath}.tmp`;
   await writeFile(temporaryPath, `${JSON.stringify(settings, null, 2)}\n`, 'utf8');
   await rename(temporaryPath, settingsPath);
