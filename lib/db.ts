@@ -483,3 +483,81 @@ export async function deleteCustomer(id: number): Promise<boolean> {
   if (error) throw error;
   return (count ?? 0) > 0;
 }
+
+// ---- Admins ----
+
+export interface Admin {
+  id: number;
+  nombre: string;
+  email: string;
+  passwordHash: string;
+  createdAt: string;
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function rowToAdmin(row: any): Admin {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    email: row.email,
+    passwordHash: row.password_hash,
+    createdAt: row.created_at,
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export async function getAdmins(): Promise<Admin[]> {
+  const { data, error } = await sb().from('admins').select('*').order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(rowToAdmin);
+}
+
+export async function getAdminById(id: number): Promise<Admin | undefined> {
+  const { data, error } = await sb().from('admins').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return data ? rowToAdmin(data) : undefined;
+}
+
+export async function getAdminByEmail(email: string): Promise<Admin | undefined> {
+  const e = email.trim().toLowerCase();
+  const { data, error } = await sb().from('admins').select('*').eq('email', e).maybeSingle();
+  if (error) throw error;
+  return data ? rowToAdmin(data) : undefined;
+}
+
+export async function createAdmin(data: {
+  nombre: string;
+  email: string;
+  passwordHash: string;
+}): Promise<Admin> {
+  const row = {
+    nombre: data.nombre,
+    email: data.email.trim().toLowerCase(),
+    password_hash: data.passwordHash,
+  };
+  const { data: inserted, error } = await sb().from('admins').insert(row).select().single();
+  if (error) throw error;
+  return rowToAdmin(inserted);
+}
+
+export async function updateAdmin(
+  id: number,
+  data: { nombre?: string; email?: string; passwordHash?: string },
+): Promise<Admin | undefined> {
+  const prev = await getAdminById(id);
+  if (!prev) return undefined;
+  const row: Record<string, unknown> = {
+    nombre: data.nombre ?? prev.nombre,
+    email: (data.email ?? prev.email).trim().toLowerCase(),
+  };
+  if (data.passwordHash) row.password_hash = data.passwordHash;
+  const { data: updated, error } = await sb().from('admins').update(row).eq('id', id).select().single();
+  if (error) throw error;
+  return rowToAdmin(updated);
+}
+
+export async function deleteAdmin(id: number): Promise<boolean> {
+  const { error, count } = await sb().from('admins').delete({ count: 'exact' }).eq('id', id);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}

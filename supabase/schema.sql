@@ -53,7 +53,16 @@ create table if not exists customers (
   created_at timestamptz not null default now()
 );
 
+create table if not exists admins (
+  id bigserial primary key,
+  nombre text not null,
+  email text not null unique,
+  password_hash text not null,
+  created_at timestamptz not null default now()
+);
+
 -- Índices útiles
 create index if not exists idx_products_slug on products (slug);
 create index if not exists idx_orders_number on orders (number);
 create index if not exists idx_customers_email on customers (email);
+create index if not exists idx_admins_email on admins (email);

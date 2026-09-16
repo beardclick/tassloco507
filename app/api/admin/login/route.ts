@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { AUTH_COOKIE, signToken, verifyCredentials } from '@/lib/auth';
+import { AUTH_COOKIE, ADMIN_USER, signToken, verifyCredentials } from '@/lib/auth';
 import { getSupabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
@@ -12,7 +12,8 @@ export async function POST(req: Request) {
   const user = String(body.user ?? '');
   const password = String(body.password ?? '');
 
-  let authenticated = verifyCredentials(user, password);
+  let identity = await verifyCredentials(user, password);
+  let authenticated = Boolean(identity);
 
   // También permite entrar con un usuario confirmado de Supabase Auth.
   if (!authenticated && user.includes('@') && password) {
@@ -21,7 +22,10 @@ export async function POST(req: Request) {
         email: user.toLowerCase(),
         password,
       });
-      authenticated = Boolean(data.user && !error);
+      if (data.user && !error) {
+        authenticated = true;
+        identity = user.toLowerCase();
+      }
     } catch {
       authenticated = false;
     }
@@ -35,9 +39,7 @@ export async function POST(req: Request) {
   }
 
   const res = NextResponse.json({ ok: true });
-  // La cookie representa la sesión interna del panel, independientemente
-  // de si la autenticación se hizo con las credenciales legacy o Supabase.
-  res.cookies.set(AUTH_COOKIE, signToken(), {
+  res.cookies.set(AUTH_COOKIE, signToken(identity || ADMIN_USER), {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',

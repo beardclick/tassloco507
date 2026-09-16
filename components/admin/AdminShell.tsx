@@ -13,6 +13,7 @@ const nav = [
   { href: '/admin/categorias', label: 'Categorías' },
   { href: '/admin/pedidos', label: 'Pedidos' },
   { href: '/admin/clientes', label: 'Clientes' },
+  { href: '/admin/administradores', label: 'Administradores' },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
