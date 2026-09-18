@@ -4,6 +4,7 @@ import { formatMoney } from '@/lib/money';
 import { formatDateTime } from '@/lib/dates';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Pagination } from '@/components/Pagination';
+import { EyeIcon } from '@/components/Icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,7 @@ export default async function AdminPedidos({
                 <th>Pago</th>
                 <th>Total</th>
                 <th>Estado</th>
+                <th style={{ textAlign: 'right' }}>Ver</th>
               </tr>
             </thead>
             <tbody>
@@ -64,6 +66,17 @@ export default async function AdminPedidos({
                   <td>{formatMoney(o.total)}</td>
                   <td>
                     <StatusBadge status={o.status} />
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <Link
+                      href={`/admin/pedidos/${o.id}`}
+                      className="admin-link"
+                      aria-label="Ver pedido"
+                      title="Ver pedido"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                    >
+                      <EyeIcon style={{ width: 17, height: 17 }} /> Ver
+                    </Link>
                   </td>
                 </tr>
               ))}

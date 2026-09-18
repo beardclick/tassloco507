@@ -1703,3 +1703,57 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   .chips--desktop { display: none; }
   .mobile-filter { display: block; }
 }
+
+/* ==========================================================================
+   Media library (admin)
+   ========================================================================== */
+.media-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+.media-library-item {
+  margin: 0;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.media-library-item img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #fff;
+}
+.media-library-item figcaption {
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--gray-200);
+}
+.media-badge {
+  flex-shrink: 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--black);
+  white-space: nowrap;
+}
+.media-badge--subida { background: #d7f5dc; color: #0d6b2e; }
+.media-badge--producto { background: #d1e7ff; color: #0a4d8c; }
+.media-badge--categoria { background: #e3d8ff; color: #4b2d8c; }
+.media-badge--banner { background: #fff3cd; color: #7a5b00; }
+.media-library-item__name {
+  font-size: 0.78rem;
+  color: var(--gray-700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

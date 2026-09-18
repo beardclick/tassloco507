@@ -11,6 +11,7 @@ const nav = [
   { href: '/admin/homepage', label: 'Homepage' },
   { href: '/admin/productos', label: 'Productos' },
   { href: '/admin/categorias', label: 'Categorías' },
+  { href: '/admin/media', label: 'Media' },
   { href: '/admin/pedidos', label: 'Pedidos' },
   { href: '/admin/clientes', label: 'Clientes' },
   { href: '/admin/administradores', label: 'Administradores' },
