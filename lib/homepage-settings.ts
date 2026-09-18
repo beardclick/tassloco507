@@ -42,7 +42,7 @@ export interface HomepageSettings {
 
 export const DEFAULT_HOMEPAGE_SETTINGS: HomepageSettings = {
   heroImage:
-    'https://tassloco507.com/wp-content/uploads/2020/06/banner-tass-loco-1-1024x576.jpeg',
+    'https://adgmizcnlusgxbflengu.supabase.co/storage/v1/object/public/product-images/legacy/7d61ce935c15cded94c118dae0d8a9e667790e8d.jpeg',
   eyebrowTag: '🇵🇦 PANAMÁ',
   eyebrowText: 'Street Shop',
   titleFirst: 'TASS',

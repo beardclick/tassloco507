@@ -15,6 +15,7 @@ next-env.d.ts
 
 # local data / uploads (ephemeral — will move to a hosted DB + Blob on Vercel)
 data/db.json
+data/image-map.json
 public/uploads
 
 # vercel
