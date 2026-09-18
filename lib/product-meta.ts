@@ -7,6 +7,8 @@ import { getSupabase, STORAGE_BUCKET } from '@/lib/supabase';
 export interface ProductMeta {
   draft: boolean;
   createdAt?: string;
+  quoteOnly?: boolean;
+  hidePrice?: boolean;
 }
 
 type ProductMetaMap = Record<string, ProductMeta>;

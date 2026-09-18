@@ -63,6 +63,8 @@ export interface ProductInput {
   categoryIds?: number[];
   tags?: string;
   draft?: boolean;
+  quoteOnly?: boolean;
+  hidePrice?: boolean;
 }
 
 export interface CategoryInput {
@@ -286,6 +288,8 @@ export async function getProducts(includeDrafts = false): Promise<Product[]> {
     ...normalizeProductText(product),
     draft: meta[String(product.id)]?.draft ?? false,
     createdAt: meta[String(product.id)]?.createdAt,
+    quoteOnly: meta[String(product.id)]?.quoteOnly ?? false,
+    hidePrice: meta[String(product.id)]?.hidePrice ?? false,
   }));
   return includeDrafts ? products : products.filter((product) => !product.draft);
 }
@@ -299,6 +303,8 @@ export async function getProductById(id: number): Promise<Product | undefined> {
     ...normalizeProductText(data as Product),
     draft: meta[String(id)]?.draft ?? false,
     createdAt: meta[String(id)]?.createdAt,
+    quoteOnly: meta[String(id)]?.quoteOnly ?? false,
+    hidePrice: meta[String(id)]?.hidePrice ?? false,
   };
 }
 
@@ -309,7 +315,13 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
   const product = normalizeProductText(data as Product);
   const meta = await getProductMetaMap();
   if (meta[String(product.id)]?.draft) return undefined;
-  return { ...product, draft: false, createdAt: meta[String(product.id)]?.createdAt };
+  return {
+    ...product,
+    draft: false,
+    createdAt: meta[String(product.id)]?.createdAt,
+    quoteOnly: meta[String(product.id)]?.quoteOnly ?? false,
+    hidePrice: meta[String(product.id)]?.hidePrice ?? false,
+  };
 }
 
 export async function createProduct(input: ProductInput, categories: ProductCategory[]): Promise<Product> {
@@ -336,8 +348,19 @@ export async function createProduct(input: ProductInput, categories: ProductCate
   const { error } = await sb().from('products').insert(product);
   if (error) throw error;
   const createdAt = new Date().toISOString();
-  await setProductMeta(id, { draft: Boolean(input.draft), createdAt });
-  return { ...product, draft: Boolean(input.draft), createdAt };
+  await setProductMeta(id, {
+    draft: Boolean(input.draft),
+    createdAt,
+    quoteOnly: Boolean(input.quoteOnly),
+    hidePrice: Boolean(input.hidePrice),
+  });
+  return {
+    ...product,
+    draft: Boolean(input.draft),
+    createdAt,
+    quoteOnly: Boolean(input.quoteOnly),
+    hidePrice: Boolean(input.hidePrice),
+  };
 }
 
 export async function updateProduct(
@@ -367,8 +390,16 @@ export async function updateProduct(
   await setProductMeta(id, {
     draft: Boolean(input.draft),
     createdAt: prev.createdAt ?? new Date().toISOString(),
+    quoteOnly: Boolean(input.quoteOnly),
+    hidePrice: Boolean(input.hidePrice),
   });
-  return { ...updated, draft: Boolean(input.draft), createdAt: prev.createdAt };
+  return {
+    ...updated,
+    draft: Boolean(input.draft),
+    createdAt: prev.createdAt,
+    quoteOnly: Boolean(input.quoteOnly),
+    hidePrice: Boolean(input.hidePrice),
+  };
 }
 
 export async function deleteProduct(id: number): Promise<boolean> {

@@ -2,10 +2,13 @@ import Link from 'next/link';
 import { formatMoney } from '@/lib/money';
 import { toSummary, type Product } from '@/lib/catalog';
 import { AddToCartButton } from './AddToCartButton';
+import { SITE } from '@/lib/site';
+import { WhatsappIcon } from './Icons';
 
 export function ProductCard({ product }: { product: Product }) {
   const summary = toSummary(product);
   const category = product.categories[0]?.name ?? '';
+  const waHref = `${SITE.whatsappLink}?text=${encodeURIComponent(`Hola Tass Loco 507, me interesa: ${product.name}`)}`;
 
   return (
     <article className="product-card">
@@ -26,14 +29,22 @@ export function ProductCard({ product }: { product: Product }) {
         <Link href={`/producto/${product.slug}`} className="product-card__name">
           {product.name}
         </Link>
-        <div className="product-card__price-row">
-          <span className="product-card__price">{formatMoney(summary.price)}</span>
-          {summary.onSale && summary.regularPrice && (
-            <span className="product-card__price--old">{formatMoney(summary.regularPrice)}</span>
-          )}
-        </div>
+        {!summary.hidePrice && (
+          <div className="product-card__price-row">
+            <span className="product-card__price">{formatMoney(summary.price)}</span>
+            {summary.onSale && summary.regularPrice && (
+              <span className="product-card__price--old">{formatMoney(summary.regularPrice)}</span>
+            )}
+          </div>
+        )}
         <div className="product-card__actions">
-          <AddToCartButton product={summary} className="btn btn--black btn--sm" />
+          {summary.quoteOnly ? (
+            <a href={waHref} target="_blank" rel="noreferrer" className="btn btn--black btn--sm">
+              <WhatsappIcon style={{ width: 16, height: 16 }} /> Consultar
+            </a>
+          ) : (
+            <AddToCartButton product={summary} className="btn btn--black btn--sm" />
+          )}
           <Link href={`/producto/${product.slug}`} className="btn btn--ghost btn--sm" aria-label="Ver detalle">
             Ver
           </Link>

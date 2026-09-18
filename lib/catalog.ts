@@ -48,6 +48,8 @@ export interface Product {
   tags: string[];
   draft?: boolean;
   createdAt?: string;
+  quoteOnly?: boolean;
+  hidePrice?: boolean;
 }
 
 export interface Category {
@@ -227,6 +229,11 @@ export function moneyValue(p: Prices): number {
   return Number(p.price) / Math.pow(10, minor);
 }
 
+export function isQuoteOnly(p: Product): boolean {
+  if (p.quoteOnly) return true;
+  return p.categories.some((c) => c.slug === 'pedido-especial');
+}
+
 export function toSummary(p: Product): ProductSummary {
   return {
     slug: p.slug,
@@ -240,6 +247,8 @@ export function toSummary(p: Product): ProductSummary {
     image: p.images.length > 0 ? p.images[0].src : null,
     categoryNames: p.categories.map((c) => c.name),
     link: `/producto/${p.slug}`,
+    quoteOnly: isQuoteOnly(p),
+    hidePrice: Boolean(p.hidePrice),
   };
 }
 

@@ -38,7 +38,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const firstCatHref = firstCat
     ? firstCat.link.replace('https://tassloco507.com', '')
     : '/shop';
-  const waText = encodeURIComponent(`Hola Tass Loco 507, me interesa: ${product.name} (${formatMoney(summary.price)})`);
+  const waText = encodeURIComponent(
+    `Hola Tass Loco 507, me interesa: ${product.name}${
+      summary.hidePrice ? '' : ` (${formatMoney(summary.price)})`
+    }`,
+  );
 
   return (
     <>
@@ -73,12 +77,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             <h1 className="pdp__title">{product.name}</h1>
 
-            <div className="pdp__price">
-              <span className="now">{formatMoney(summary.price)}</span>
-              {summary.onSale && summary.regularPrice && (
-                <span className="old">{formatMoney(summary.regularPrice)}</span>
-              )}
-            </div>
+            {!summary.hidePrice && (
+              <div className="pdp__price">
+                <span className="now">{formatMoney(summary.price)}</span>
+                {summary.onSale && summary.regularPrice && (
+                  <span className="old">{formatMoney(summary.regularPrice)}</span>
+                )}
+              </div>
+            )}
 
             <p className="pdp__status">
               {product.in_stock ? (
@@ -90,17 +96,30 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
             {product.short_description && <p className="pdp__desc">{product.short_description}</p>}
 
-            <BuyBox product={summary} />
-
-            <a
-              href={`${SITE.whatsappLink}?text=${waText}`}
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn--black btn--lg"
-              style={{ marginBottom: 24 }}
-            >
-              <WhatsappIcon style={{ width: 18, height: 18 }} /> Pedir por WhatsApp
-            </a>
+            {summary.quoteOnly ? (
+              <a
+                href={`${SITE.whatsappLink}?text=${waText}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn--red btn--lg"
+                style={{ marginBottom: 24 }}
+              >
+                <WhatsappIcon style={{ width: 18, height: 18 }} /> Consultar por WhatsApp
+              </a>
+            ) : (
+              <>
+                <BuyBox product={summary} />
+                <a
+                  href={`${SITE.whatsappLink}?text=${waText}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn--black btn--lg"
+                  style={{ marginBottom: 24 }}
+                >
+                  <WhatsappIcon style={{ width: 18, height: 18 }} /> Pedir por WhatsApp
+                </a>
+              </>
+            )}
 
             <div className="pdp__meta">
               <h4>Detalles</h4>

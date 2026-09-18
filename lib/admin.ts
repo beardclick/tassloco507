@@ -54,6 +54,8 @@ export function parseProductInput(body: any): ProductInput {
     onSale: Boolean(body.onSale),
     inStock: body.inStock !== false,
     draft: Boolean(body.draft),
+    quoteOnly: Boolean(body.quoteOnly),
+    hidePrice: Boolean(body.hidePrice),
     sku: String(body.sku ?? '').trim(),
     shortDescription: String(body.shortDescription ?? '').trim(),
     description: String(body.description ?? '').trim(),

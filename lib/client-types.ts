@@ -10,6 +10,8 @@ export interface ProductSummary {
   image: string | null;
   categoryNames: string[];
   link: string;
+  quoteOnly: boolean;
+  hidePrice: boolean;
 }
 
 export interface CartItem {

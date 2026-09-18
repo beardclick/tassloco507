@@ -28,6 +28,8 @@ export function ProductForm({
   const [onSale, setOnSale] = useState(product?.on_sale ?? false);
   const [inStock, setInStock] = useState(product?.in_stock ?? true);
   const [draft, setDraft] = useState(product?.draft ?? false);
+  const [quoteOnly, setQuoteOnly] = useState(product?.quoteOnly ?? false);
+  const [hidePrice, setHidePrice] = useState(product?.hidePrice ?? false);
   const [sku, setSku] = useState(product?.sku ?? '');
   const [images, setImages] = useState<string[]>(
     product ? product.images.map((i) => i.src) : [],
@@ -58,6 +60,8 @@ export function ProductForm({
       onSale,
       inStock,
       draft,
+      quoteOnly,
+      hidePrice,
       sku,
       images,
       shortDescription,
@@ -155,6 +159,22 @@ export function ProductForm({
                 onChange={(e) => setDraft(e.target.checked)}
               />
               Borrador (ocultar de la tienda)
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={quoteOnly}
+                onChange={(e) => setQuoteOnly(e.target.checked)}
+              />
+              Solo WhatsApp (sin carrito)
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={hidePrice}
+                onChange={(e) => setHidePrice(e.target.checked)}
+              />
+              Ocultar precio
             </label>
           </div>
 
