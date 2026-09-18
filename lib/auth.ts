@@ -41,15 +41,23 @@ export async function verifyCredentials(email: string, password: string): Promis
 export function signToken(identity = ADMIN_USER): string {
   const payload = `${identity}:${Date.now()}`;
   const sig = createHmac('sha256', SECRET).update(payload).digest('hex');
-  return `${payload}.${sig}`;
+  // base64url evita caracteres que se codifican en la cookie (p.ej. "@" y ":")
+  const encoded = Buffer.from(payload, 'utf8').toString('base64url');
+  return `${encoded}.${sig}`;
 }
 
 export function verifyToken(token: string | undefined | null): string | null {
   if (!token) return null;
   const dot = token.indexOf('.');
   if (dot === -1) return null;
-  const payload = token.slice(0, dot);
+  const encoded = token.slice(0, dot);
   const sig = token.slice(dot + 1);
+  let payload: string;
+  try {
+    payload = Buffer.from(encoded, 'base64url').toString('utf8');
+  } catch {
+    return null;
+  }
   const expected = createHmac('sha256', SECRET).update(payload).digest('hex');
   if (!safeEqual(sig, expected)) return null;
   return payload.split(':')[0] || null;
