@@ -14,6 +14,7 @@ const nav = [
   { href: '/admin/pedidos', label: 'Pedidos' },
   { href: '/admin/clientes', label: 'Clientes' },
   { href: '/admin/administradores', label: 'Administradores' },
+  { href: '/admin/notificaciones', label: 'Notificaciones' },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {

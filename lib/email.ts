@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import type { Order } from './db';
 import { formatMoney } from './money';
 import { SITE } from './site';
+import { getOrderNotificationEmails } from './notification-settings';
 
 let _resend: Resend | null = null;
 
@@ -12,7 +13,6 @@ function getResend(): Resend | null {
 }
 
 const FROM = process.env.EMAIL_FROM || 'Tass Loco 507 <onboarding@resend.dev>';
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
 
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => {
@@ -98,7 +98,8 @@ export async function sendOrderEmails(order: Order): Promise<void> {
     );
   }
 
-  if (ADMIN_EMAIL) {
+  const recipients = await getOrderNotificationEmails();
+  for (const recipient of recipients) {
     const html = layout(
       `Nuevo pedido ${order.number}`,
       `
@@ -128,7 +129,7 @@ export async function sendOrderEmails(order: Order): Promise<void> {
     jobs.push(
       resend.emails.send({
         from: FROM,
-        to: ADMIN_EMAIL,
+        to: recipient,
         subject: `Nuevo pedido ${order.number} — ${esc(order.customer.nombre)}`,
         html,
       }),
