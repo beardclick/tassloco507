@@ -5,6 +5,10 @@ import { CUSTOMER_COOKIE, signCustomerToken } from '@/lib/customer-auth';
 
 export async function POST(req: Request) {
   const body = await req.json();
+  // Honeypot anti-spam: si el campo oculto "website" viene lleno, es un bot.
+  if (String(body.website ?? '').trim()) {
+    return NextResponse.json({ ok: false, error: 'Solicitud inválida' }, { status: 400 });
+  }
   const email = String(body.email ?? '').trim().toLowerCase();
   const password = String(body.password ?? '');
 

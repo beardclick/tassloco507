@@ -2,11 +2,13 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
+  const [website, setWebsite] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +20,7 @@ export default function AdminLoginPage() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user, password }),
+        body: JSON.stringify({ user, password, website }),
       });
       const data = await res.json();
       if (res.ok && data.ok) {
@@ -56,15 +58,15 @@ export default function AdminLoginPage() {
         </div>
         <div className="form-field">
           <label htmlFor="password">Contraseña</label>
-          <input
+          <PasswordInput
             id="password"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             required
           />
         </div>
+        <input type="text" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
         {error && <p className="admin-login__error">{error}</p>}
 

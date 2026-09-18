@@ -6,6 +6,7 @@ import { useCart } from '@/components/CartProvider';
 import { formatMoney } from '@/lib/money';
 import { PAYMENT_METHODS, PROVINCIAS, SITE } from '@/lib/site';
 import { CheckIcon, WhatsappIcon } from '@/components/Icons';
+import { PasswordInput } from '@/components/PasswordInput';
 
 type Delivery = 'envio' | 'recoger';
 
@@ -17,6 +18,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [createAccount, setCreateAccount] = useState(false);
+  const [accountPassword, setAccountPassword] = useState('');
   const [loginRequired, setLoginRequired] = useState(false);
   const [accountRequired, setAccountRequired] = useState(false);
 
@@ -53,7 +55,8 @@ export default function CheckoutPage() {
       })),
       subtotal,
       createAccount,
-      password: String(fd.get('password') ?? ''),
+      password: accountPassword,
+      website: String(fd.get('website') ?? ''),
     };
     try {
       const res = await fetch('/api/orders', {
@@ -198,14 +201,15 @@ export default function CheckoutPage() {
                     Crear una cuenta (para seguir tus pedidos)
                   </label>
                   {createAccount && (
-                    <input
-                      type="password"
-                      name="password"
+                    <PasswordInput
                       minLength={6}
+                      value={accountPassword}
+                      onChange={(e) => setAccountPassword(e.target.value)}
                       placeholder="Contraseña (mín. 6 caracteres)"
                       style={{ marginTop: 8 }}
                     />
                   )}
+                  <input type="text" name="website" className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true" />
                 </div>
               </div>
             </div>

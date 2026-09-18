@@ -1757,3 +1757,35 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   Password input (show/hide) + honeypot anti-spam
+   ========================================================================== */
+.password-input { position: relative; }
+.password-input input { width: 100%; padding-right: 44px; }
+.password-input__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  color: var(--gray-500);
+  cursor: pointer;
+}
+.password-input__toggle:hover { color: var(--black); }
+.password-input__toggle svg { width: 20px; height: 20px; }
+
+.hp-field {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}

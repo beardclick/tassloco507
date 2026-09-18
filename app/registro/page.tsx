@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export default function RegistroPage() {
   const router = useRouter();
   const [form, setForm] = useState({ nombre: '', apellido: '', email: '', telefono: '', password: '' });
+  const [website, setWebsite] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +25,7 @@ export default function RegistroPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, website }),
       });
       const data = await res.json();
       if (res.ok && data.ok) {
@@ -67,8 +69,9 @@ export default function RegistroPage() {
         </div>
         <div className="form-field">
           <label htmlFor="r-pass">Contraseña</label>
-          <input id="r-pass" type="password" required minLength={6} value={form.password} onChange={set('password')} />
+          <PasswordInput id="r-pass" required minLength={6} value={form.password} onChange={set('password')} />
         </div>
+        <input type="text" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
         {error && <p className="admin-login__error">{error}</p>}
 

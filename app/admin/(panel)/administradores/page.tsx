@@ -1,12 +1,40 @@
 import Link from 'next/link';
-import { getAdmins } from '@/lib/db';
+import { getAdmins, getSupabaseAuthUsers } from '@/lib/db';
 import { formatDate } from '@/lib/dates';
+import { ADMIN_USER } from '@/lib/auth';
 import { DeleteAdminButton } from '@/components/admin/DeleteAdminButton';
 
 export const dynamic = 'force-dynamic';
 
+const TYPE_LABEL: Record<string, string> = {
+  principal: 'Acceso principal',
+  db: 'Base de datos',
+  auth: 'Supabase Auth',
+};
+
 export default async function AdministradoresPage() {
-  const admins = await getAdmins();
+  const dbAdmins = await getAdmins();
+  const authUsers = await getSupabaseAuthUsers();
+
+  type Row = { key: string; nombre: string; email: string; tipo: string; createdAt: string; id?: number };
+  const rows: Row[] = [
+    { key: 'principal', nombre: 'Administrador principal', email: ADMIN_USER, tipo: 'principal', createdAt: '' },
+    ...dbAdmins.map((a) => ({
+      key: `db-${a.id}`,
+      nombre: a.nombre,
+      email: a.email,
+      tipo: 'db',
+      createdAt: a.createdAt,
+      id: a.id,
+    })),
+    ...authUsers.map((u) => ({
+      key: `auth-${u.id}`,
+      nombre: u.email.split('@')[0] || u.email,
+      email: u.email,
+      tipo: 'auth',
+      createdAt: '',
+    })),
+  ];
 
   return (
     <div>
@@ -20,40 +48,50 @@ export default async function AdministradoresPage() {
       </div>
 
       <div className="admin-card">
-        {admins.length === 0 ? (
-          <p className="admin-empty">
-            No hay administradores adicionales. Usa el acceso principal (variables de entorno) o crea
-            uno nuevo.
-          </p>
-        ) : (
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Correo</th>
-                <th>Registro</th>
-                <th style={{ textAlign: 'right' }}>Acciones</th>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Tipo</th>
+              <th>Registro</th>
+              <th style={{ textAlign: 'right' }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key}>
+                <td>
+                  <strong>{r.nombre}</strong>
+                </td>
+                <td>{r.email}</td>
+                <td>
+                  <span className={`media-badge media-badge--${r.tipo === 'principal' ? 'banner' : r.tipo === 'db' ? 'subida' : 'producto'}`}>
+                    {TYPE_LABEL[r.tipo]}
+                  </span>
+                </td>
+                <td className="admin-muted">{r.createdAt ? formatDate(r.createdAt) : '—'}</td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                  {r.tipo === 'db' && (
+                    <>
+                      <Link href={`/admin/administradores/${r.id}`} className="admin-link">
+                        Editar
+                      </Link>{' '}
+                      <DeleteAdminButton id={r.id!} />
+                    </>
+                  )}
+                  {r.tipo === 'principal' && <span className="admin-muted">Variables de entorno</span>}
+                  {r.tipo === 'auth' && <span className="admin-muted">Usuario de Supabase Auth</span>}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {admins.map((a) => (
-                <tr key={a.id}>
-                  <td>
-                    <strong>{a.nombre}</strong>
-                  </td>
-                  <td>{a.email}</td>
-                  <td className="admin-muted">{formatDate(a.createdAt)}</td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <Link href={`/admin/administradores/${a.id}`} className="admin-link">
-                      Editar
-                    </Link>{' '}
-                    <DeleteAdminButton id={a.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
+        <p className="admin-muted" style={{ marginTop: 12 }}>
+          El administrador principal se configura con las variables <code>ADMIN_USER</code> /{' '}
+          <code>ADMIN_PASSWORD</code> en Vercel. Los usuarios de Supabase Auth pueden entrar con su
+          correo y contraseña.
+        </p>
       </div>
     </div>
   );

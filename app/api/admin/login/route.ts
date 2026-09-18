@@ -11,6 +11,10 @@ export async function POST(req: Request) {
   }
   const user = String(body.user ?? '');
   const password = String(body.password ?? '');
+  // Honeypot anti-spam
+  if (String(body.website ?? '').trim()) {
+    return NextResponse.json({ ok: false, error: 'Solicitud inválida' }, { status: 400 });
+  }
 
   let identity = await verifyCredentials(user, password);
   let authenticated = Boolean(identity);

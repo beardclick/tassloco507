@@ -67,3 +67,8 @@ export async function isAdminRequest(): Promise<boolean> {
   const store = await cookies();
   return Boolean(verifyToken(store.get(AUTH_COOKIE)?.value));
 }
+
+export async function currentAdminIdentity(): Promise<string | null> {
+  const store = await cookies();
+  return verifyToken(store.get(AUTH_COOKIE)?.value);
+}

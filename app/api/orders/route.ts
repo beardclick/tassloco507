@@ -12,6 +12,7 @@ interface OrderPayload {
   subtotal?: number;
   createAccount?: boolean;
   password?: string;
+  website?: string;
 }
 
 export async function POST(req: Request) {
@@ -26,6 +27,11 @@ export async function POST(req: Request) {
   const apellido = String(body.customer?.apellido ?? '');
   const email = String(body.customer?.email ?? '').trim().toLowerCase();
   const telefono = String(body.customer?.telefono ?? '');
+
+  // Honeypot anti-spam
+  if (String(body.website ?? '').trim()) {
+    return NextResponse.json({ ok: false, error: 'Solicitud inválida' }, { status: 400 });
+  }
 
   const items: OrderItem[] = Array.isArray(body.items)
     ? body.items.map((i) => ({

@@ -592,3 +592,24 @@ export async function deleteAdmin(id: number): Promise<boolean> {
   if (error) throw error;
   return (count ?? 0) > 0;
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  confirmed: boolean;
+}
+
+export async function getSupabaseAuthUsers(): Promise<AuthUser[]> {
+  const { data, error } = await getSupabase().auth.admin.listUsers();
+  if (error) return [];
+  return (data.users ?? []).map((u) => ({
+    id: u.id,
+    email: u.email ?? '',
+    confirmed: Boolean(u.email_confirmed_at),
+  }));
+}
+
+export async function updateSupabaseAuthPassword(id: string, password: string): Promise<boolean> {
+  const { error } = await getSupabase().auth.admin.updateUserById(id, { password });
+  return !error;
+}
