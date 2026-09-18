@@ -18,6 +18,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [createAccount, setCreateAccount] = useState(false);
   const [loginRequired, setLoginRequired] = useState(false);
+  const [accountRequired, setAccountRequired] = useState(false);
 
   const activePayment = PAYMENT_METHODS.find((p) => p.id === payment) ?? PAYMENT_METHODS[0];
 
@@ -26,6 +27,7 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setError('');
     setLoginRequired(false);
+    setAccountRequired(false);
     const fd = new FormData(e.currentTarget as HTMLFormElement);
     const payload = {
       customer: {
@@ -66,6 +68,8 @@ export default function CheckoutPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setLoginRequired(data.code === 'LOGIN_REQUIRED');
+        setAccountRequired(data.code === 'ACCOUNT_REQUIRED');
+        if (data.code === 'ACCOUNT_REQUIRED') setCreateAccount(true);
         setError(data.error || 'No se pudo procesar el pedido');
       }
     } catch {
@@ -300,6 +304,11 @@ export default function CheckoutPage() {
                   <Link href="/login" className="btn btn--black btn--sm" style={{ marginTop: 8 }}>
                     Iniciar sesión
                   </Link>
+                )}
+                {accountRequired && (
+                  <p className="admin-muted" style={{ margin: '8px 0 0' }}>
+                    Ya marcamos "Crear una cuenta" por ti. Escribe una contraseña y confirma de nuevo.
+                  </p>
                 )}
               </div>
             )}

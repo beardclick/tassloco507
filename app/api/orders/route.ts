@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createCustomer, createOrder, getCustomerByEmail, type OrderItem } from '@/lib/db';
+import { createCustomer, createOrder, getCustomerByEmail, getOrders, type OrderItem } from '@/lib/db';
 import { sendOrderEmails } from '@/lib/email';
 import { CUSTOMER_COOKIE, currentCustomer, signCustomerToken } from '@/lib/customer-auth';
 import { hashPassword } from '@/lib/password';
@@ -47,11 +47,25 @@ export async function POST(req: Request) {
   // Si el correo ya está registrado y el usuario no ha iniciado sesión como tal, obligar a login.
   const existing = email ? await getCustomerByEmail(email) : undefined;
   const session = await currentCustomer();
-  if (existing && (!session || session.email.toLowerCase() !== email)) {
+  const isAuth = session ? session.email.toLowerCase() === email : false;
+  if (existing && !isAuth) {
     return NextResponse.json(
       { ok: false, code: 'LOGIN_REQUIRED', error: 'Este correo ya está registrado. Inicia sesión para continuar.' },
       { status: 409 },
     );
+  }
+
+  // Si el correo ya tiene pedidos anteriores (como invitado) y no inició sesión → crear cuenta.
+  if (!isAuth && email) {
+    const hasPriorOrders = (await getOrders()).some(
+      (o) => o.customer.email.toLowerCase() === email,
+    );
+    if (hasPriorOrders) {
+      return NextResponse.json(
+        { ok: false, code: 'ACCOUNT_REQUIRED', error: 'Este correo ya tiene pedidos. Crea una cuenta para continuar.' },
+        { status: 409 },
+      );
+    }
   }
 
   // Registro opcional desde el checkout.

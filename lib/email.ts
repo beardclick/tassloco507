@@ -13,6 +13,7 @@ function getResend(): Resend | null {
 }
 
 const FROM = process.env.EMAIL_FROM || 'Tass Loco 507 <onboarding@resend.dev>';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tassloco507.vercel.app';
 
 function esc(s: string): string {
   return s.replace(/[&<>"']/g, (c) => {
@@ -29,14 +30,17 @@ function esc(s: string): string {
 
 function itemsHtml(order: Order): string {
   return order.items
-    .map(
-      (it) => `
+    .map((it) => {
+      const name = it.slug
+        ? `<a href="${BASE_URL}/producto/${encodeURIComponent(it.slug)}" style="color:#dd3333;text-decoration:none;">${esc(it.name)}</a>`
+        : esc(it.name);
+      return `
         <tr>
-          <td style="padding:8px 0;border-bottom:1px solid #eee;">${esc(it.name)}</td>
+          <td style="padding:8px 0;border-bottom:1px solid #eee;">${name}</td>
           <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:center;">${it.qty}</td>
           <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;">${formatMoney(it.price * it.qty)}</td>
-        </tr>`,
-    )
+        </tr>`;
+    })
     .join('');
 }
 
@@ -46,7 +50,6 @@ function layout(title: string, body: string): string {
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border:2px solid #0b0b0b;border-radius:12px;overflow:hidden;">
       <div style="background:#0b0b0b;color:#fff;padding:16px 20px;">
         <span style="font-weight:800;font-size:18px;">TASS LOCO <span style="color:#dd3333;">507</span></span>
-        <div style="font-size:12px;color:#aaa;">Fashion · Car · Racing</div>
       </div>
       <div style="padding:24px 20px;">
         <h1 style="margin:0 0 16px;font-size:20px;color:#0b0b0b;">${title}</h1>
@@ -124,7 +127,8 @@ export async function sendOrderEmails(order: Order): Promise<void> {
       </p>
       <p style="margin:16px 0 0;font-size:13px;color:#555;">
         Revisa y confirma el pedido desde el panel admin.
-      </p>`,
+      </p>
+      <a href="${BASE_URL}/admin/pedidos/${order.id}" style="display:inline-block;margin-top:16px;padding:12px 20px;background:#dd3333;color:#ffffff;font-weight:bold;text-decoration:none;border-radius:8px;">Ver pedido</a>`,
     );
     jobs.push(
       resend.emails.send({
