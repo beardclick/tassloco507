@@ -451,6 +451,12 @@ export async function updateOrderStatus(id: string, status: OrderStatus): Promis
   return updateOrder(id, { status });
 }
 
+export async function deleteOrder(id: string): Promise<boolean> {
+  const { error, count } = await sb().from('orders').delete({ count: 'exact' }).eq('id', id);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
 // ---- Customers ----
 
 export async function getCustomers(): Promise<Customer[]> {

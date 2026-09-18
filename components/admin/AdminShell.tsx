@@ -15,7 +15,6 @@ const nav = [
   { href: '/admin/pedidos', label: 'Pedidos' },
   { href: '/admin/clientes', label: 'Clientes' },
   { href: '/admin/administradores', label: 'Administradores' },
-  { href: '/admin/notificaciones', label: 'Notificaciones' },
   { href: '/admin/perfil', label: 'Mi perfil' },
 ];
 

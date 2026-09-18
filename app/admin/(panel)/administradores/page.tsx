@@ -2,7 +2,9 @@ import Link from 'next/link';
 import { getAdmins, getSupabaseAuthUsers } from '@/lib/db';
 import { formatDate } from '@/lib/dates';
 import { ADMIN_USER } from '@/lib/auth';
+import { getDisabledNotificationEmails } from '@/lib/notification-settings';
 import { DeleteAdminButton } from '@/components/admin/DeleteAdminButton';
+import { NotificationToggle } from '@/components/admin/NotificationToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +15,12 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default async function AdministradoresPage() {
-  const dbAdmins = await getAdmins();
-  const authUsers = await getSupabaseAuthUsers();
+  const [dbAdmins, authUsers, disabled] = await Promise.all([
+    getAdmins(),
+    getSupabaseAuthUsers(),
+    getDisabledNotificationEmails(),
+  ]);
+  const disabledSet = new Set(disabled);
 
   type Row = { key: string; nombre: string; email: string; tipo: string; createdAt: string; id?: number };
   const rows: Row[] = [
@@ -54,7 +60,7 @@ export default async function AdministradoresPage() {
               <th>Nombre</th>
               <th>Correo</th>
               <th>Tipo</th>
-              <th>Registro</th>
+              <th>Notificaciones</th>
               <th style={{ textAlign: 'right' }}>Acciones</th>
             </tr>
           </thead>
@@ -70,7 +76,16 @@ export default async function AdministradoresPage() {
                     {TYPE_LABEL[r.tipo]}
                   </span>
                 </td>
-                <td className="admin-muted">{r.createdAt ? formatDate(r.createdAt) : '—'}</td>
+                <td>
+                  {r.tipo === 'principal' ? (
+                    <span className="admin-muted">—</span>
+                  ) : (
+                    <NotificationToggle
+                      email={r.email}
+                      enabled={!disabledSet.has(r.email.toLowerCase())}
+                    />
+                  )}
+                </td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   {r.tipo === 'db' && (
                     <>
@@ -87,11 +102,6 @@ export default async function AdministradoresPage() {
             ))}
           </tbody>
         </table>
-        <p className="admin-muted" style={{ marginTop: 12 }}>
-          El administrador principal se configura con las variables <code>ADMIN_USER</code> /{' '}
-          <code>ADMIN_PASSWORD</code> en Vercel. Los usuarios de Supabase Auth pueden entrar con su
-          correo y contraseña.
-        </p>
       </div>
     </div>
   );

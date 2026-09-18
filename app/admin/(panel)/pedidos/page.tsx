@@ -5,6 +5,7 @@ import { formatDateTime } from '@/lib/dates';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { Pagination } from '@/components/Pagination';
 import { EyeIcon } from '@/components/Icons';
+import { DeleteOrderButton } from '@/components/admin/DeleteOrderButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,15 +47,24 @@ export default async function AdminPedidos({
                 <th>Pago</th>
                 <th>Total</th>
                 <th>Estado</th>
-                <th style={{ textAlign: 'right' }}>Ver</th>
+                <th style={{ textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {pageOrders.map((o) => (
                 <tr key={o.id}>
-                  <td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
                     <Link href={`/admin/pedidos/${o.id}`} className="admin-link">
                       {o.number}
+                    </Link>{' '}
+                    <Link
+                      href={`/admin/pedidos/${o.id}`}
+                      className="admin-link"
+                      aria-label="Ver pedido"
+                      title="Ver pedido"
+                      style={{ display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle' }}
+                    >
+                      <EyeIcon style={{ width: 16, height: 16 }} />
                     </Link>
                   </td>
                   <td>{formatDateTime(o.createdAt)}</td>
@@ -67,16 +77,8 @@ export default async function AdminPedidos({
                   <td>
                     <StatusBadge status={o.status} />
                   </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <Link
-                      href={`/admin/pedidos/${o.id}`}
-                      className="admin-link"
-                      aria-label="Ver pedido"
-                      title="Ver pedido"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                    >
-                      <EyeIcon style={{ width: 17, height: 17 }} /> Ver
-                    </Link>
+                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    <DeleteOrderButton id={o.id} />
                   </td>
                 </tr>
               ))}

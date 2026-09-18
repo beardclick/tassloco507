@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/auth';
-import { ORDER_STATUSES, updateOrder, updateOrderStatus, type OrderItem, type OrderStatus } from '@/lib/db';
+import { deleteOrder, ORDER_STATUSES, updateOrder, updateOrderStatus, type OrderItem, type OrderStatus } from '@/lib/db';
 
 export async function PATCH(
   req: Request,
@@ -73,4 +73,19 @@ export async function PUT(
     return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
   }
   return NextResponse.json({ ok: true, order: updated });
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  const { id } = await params;
+  const ok = await deleteOrder(id);
+  if (!ok) {
+    return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
+  }
+  return NextResponse.json({ ok: true });
 }
