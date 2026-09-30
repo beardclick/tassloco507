@@ -6,6 +6,7 @@ import { CartProvider } from '@/components/CartProvider';
 import { AppChrome } from '@/components/AppChrome';
 import { Header, type NavItem } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { RecoveryRedirect } from '@/components/RecoveryRedirect';
 import { SITE } from '@/lib/site';
 
 const bungee = Bungee({
@@ -76,6 +77,7 @@ export default function RootLayout({
             {children}
           </AppChrome>
         </CartProvider>
+        <RecoveryRedirect />
       </body>
     </html>
   );
