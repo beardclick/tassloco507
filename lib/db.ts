@@ -91,6 +91,18 @@ export function slugify(input: string): string {
     .replace(/(^-|-$)+/g, '');
 }
 
+async function uniqueSlug(base: string): Promise<string> {
+  let slug = base;
+  let n = 2;
+  while (true) {
+    const { data, error } = await sb().from('products').select('id').eq('slug', slug).limit(1);
+    if (error) throw error;
+    if (!data || data.length === 0) return slug;
+    slug = `${base}-${n}`;
+    n += 1;
+  }
+}
+
 function makePrices(price: number, regularPrice?: number, onSale?: boolean): Prices {
   const minor = 2;
   const p = Math.round(price * Math.pow(10, minor)).toString();
@@ -327,7 +339,8 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 export async function createProduct(input: ProductInput, categories: ProductCategory[]): Promise<Product> {
   const { data } = await sb().from('products').select('id').order('id', { ascending: false }).limit(1);
   const id = (data && data[0] ? data[0].id : 0) + 1;
-  const slug = slugify(input.name) || `producto-${id}`;
+  const baseSlug = slugify(input.name) || `producto-${id}`;
+  const slug = await uniqueSlug(baseSlug);
   const product: Product = {
     id,
     name: input.name,
