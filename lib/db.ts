@@ -397,7 +397,7 @@ export async function updateProduct(
     categories,
     tags: (input.tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
   };
-  const { draft: _draft, createdAt: _createdAt, ...productRow } = updated;
+  const { draft: _draft, createdAt: _createdAt, quoteOnly: _q, hidePrice: _h, ...productRow } = updated;
   const { error } = await sb().from('products').update(productRow).eq('id', id);
   if (error) throw error;
   await setProductMeta(id, {
