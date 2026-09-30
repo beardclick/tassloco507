@@ -27,3 +27,7 @@ public/uploads
 # logs / misc
 *.log
 .DS_Store
+
+# env pulls (contienen secretos, no commitear)
+.env.check
+.env.pulled*

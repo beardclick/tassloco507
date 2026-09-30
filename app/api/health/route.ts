@@ -13,6 +13,16 @@ export async function GET() {
     node_env: process.env.NODE_ENV,
   };
 
+  const rawKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  try {
+    const payload = rawKey.split('.')[1] ?? '';
+    const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    info.key_role = decoded.role;
+    info.key_ref = decoded.ref;
+  } catch {
+    info.key_role = rawKey ? `invalido (${rawKey.slice(0, 8)}...)` : 'vacio';
+  }
+
   try {
     const { getSupabase } = await import('@/lib/supabase');
     const sb = getSupabase();
@@ -25,6 +35,12 @@ export async function GET() {
     info.categories = catErr ? `ERROR: ${catErr.message}` : catCount;
     const { data: buckets, error: bErr } = await sb.storage.listBuckets();
     info.buckets = bErr ? `ERROR: ${bErr.message}` : (buckets ?? []).map((b) => b.name);
+    const { error: wErr } = await sb.storage.from('product-images').upload(
+      'settings/_health-test.json',
+      JSON.stringify({ t: Date.now() }),
+      { upsert: true, contentType: 'application/json' },
+    );
+    info.storage_write = wErr ? `ERROR: ${wErr.message}` : 'OK';
   } catch (e) {
     info.error = e instanceof Error ? e.message : String(e);
   }
