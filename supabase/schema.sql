@@ -66,3 +66,7 @@ create index if not exists idx_products_slug on products (slug);
 create index if not exists idx_orders_number on orders (number);
 create index if not exists idx_customers_email on customers (email);
 create index if not exists idx_admins_email on admins (email);
+create index if not exists idx_categories_slug on categories (slug);
+create index if not exists idx_categories_parent on categories (parent);
+create index if not exists idx_orders_created_at on orders (created_at);
+create index if not exists idx_products_in_stock on products (in_stock);

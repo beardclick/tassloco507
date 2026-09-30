@@ -1,7 +1,9 @@
+import { cache } from 'react';
 import type { ProductSummary } from './client-types';
 import {
   getCategories as dbGetCategories,
   getProducts as dbGetProducts,
+  getProductBySlug as dbGetProductBySlug,
 } from './db';
 
 export interface ProductImage {
@@ -67,13 +69,11 @@ export interface CategoryNode extends Category {
   children: CategoryNode[];
 }
 
-export async function loadProducts(): Promise<Product[]> {
-  return dbGetProducts();
-}
+// `cache` de React memoiza el resultado por petición: aunque una página llame a
+// loadProducts/loadCategories varias veces, la BD solo se consulta una vez.
+export const loadProducts = cache(async (): Promise<Product[]> => dbGetProducts());
 
-export async function loadCategories(): Promise<Category[]> {
-  return dbGetCategories();
-}
+export const loadCategories = cache(async (): Promise<Category[]> => dbGetCategories());
 
 async function catById(): Promise<Map<number, Category>> {
   return new Map((await loadCategories()).map((c) => [c.id, c]));
@@ -171,7 +171,8 @@ export async function getCategoryProductCount(cat: Category): Promise<number> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  return dbGetProducts().then((all) => all.find((p) => p.slug === slug));
+  // Consulta directa por slug (usa el índice), en lugar de traer todos los productos.
+  return dbGetProductBySlug(slug);
 }
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
