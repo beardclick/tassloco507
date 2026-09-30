@@ -12,6 +12,13 @@ export async function POST(req: Request) {
   if (!input.name) {
     return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
   }
-  const product = await createProduct(input, await resolveCategories(input.categoryIds));
-  return NextResponse.json({ ok: true, product });
+  try {
+    const product = await createProduct(input, await resolveCategories(input.categoryIds));
+    return NextResponse.json({ ok: true, product });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : String(e) },
+      { status: 500 },
+    );
+  }
 }

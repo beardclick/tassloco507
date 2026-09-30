@@ -13,11 +13,18 @@ export async function PUT(
   const { id } = await params;
   const body = await req.json();
   const input = parseProductInput(body);
-  const updated = await updateProduct(Number(id), input, await resolveCategories(input.categoryIds));
-  if (!updated) {
-    return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
+  try {
+    const updated = await updateProduct(Number(id), input, await resolveCategories(input.categoryIds));
+    if (!updated) {
+      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true, product: updated });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : String(e) },
+      { status: 500 },
+    );
   }
-  return NextResponse.json({ ok: true, product: updated });
 }
 
 export async function DELETE(

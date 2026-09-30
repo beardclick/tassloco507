@@ -11,6 +11,13 @@ export async function PUT(req: Request) {
   if (!email) {
     return NextResponse.json({ error: 'Email requerido' }, { status: 400 });
   }
-  await setNotificationDisabled(email, Boolean(body.disabled));
-  return NextResponse.json({ ok: true });
+  try {
+    await setNotificationDisabled(email, Boolean(body.disabled));
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : String(e) },
+      { status: 500 },
+    );
+  }
 }
