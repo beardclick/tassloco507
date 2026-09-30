@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/auth';
 import { deleteProduct, updateProduct } from '@/lib/db';
 import { parseProductInput, resolveCategories } from '@/lib/admin';
+import { errMsg } from '@/lib/errors';
 
 export async function PUT(
   req: Request,
@@ -20,10 +21,7 @@ export async function PUT(
     }
     return NextResponse.json({ ok: true, product: updated });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : String(e) },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 });
   }
 }
 

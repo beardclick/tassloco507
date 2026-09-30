@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/auth';
 import { setNotificationDisabled } from '@/lib/notification-settings';
+import { errMsg } from '@/lib/errors';
 
 export async function PUT(req: Request) {
   if (!(await isAdminRequest())) {
@@ -15,9 +16,6 @@ export async function PUT(req: Request) {
     await setNotificationDisabled(email, Boolean(body.disabled));
     return NextResponse.json({ ok: true });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : String(e) },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: errMsg(e) }, { status: 500 });
   }
 }
