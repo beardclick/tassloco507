@@ -14,6 +14,8 @@ export async function GET() {
   };
 
   const rawKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  info.supabase_url_value = process.env.SUPABASE_URL ?? '';
+  info.key_last6 = rawKey.slice(-6);
   try {
     const payload = rawKey.split('.')[1] ?? '';
     const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
@@ -41,6 +43,17 @@ export async function GET() {
       { upsert: true, contentType: 'application/json' },
     );
     info.storage_write = wErr ? `ERROR: ${wErr.message}` : 'OK';
+    // Cliente fresco (sin singleton) con las mismas variables
+    const { createClient } = await import('@supabase/supabase-js');
+    const fresh = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+      auth: { persistSession: false },
+    });
+    const { error: fErr } = await fresh.storage.from('product-images').upload(
+      'settings/_health-fresh.json',
+      JSON.stringify({ t: Date.now() }),
+      { upsert: true, contentType: 'application/json' },
+    );
+    info.storage_write_fresh = fErr ? `ERROR: ${fErr.message}` : 'OK';
   } catch (e) {
     info.error = e instanceof Error ? e.message : String(e);
   }
