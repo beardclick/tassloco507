@@ -57,11 +57,6 @@ export function HomepageSettingsForm({ settings }: { settings: HomepageSettings 
           recommended="Tamaño recomendado: 1200 px de ancho, formato horizontal."
         />
       </div>
-      <div className="form-grid">
-        <NumberField id="marquee-speed-desktop" label="Velocidad desktop (segundos)" value={content.marqueeSpeedDesktop} onChange={(value) => setContent((current) => ({ ...current, marqueeSpeedDesktop: value }))} />
-        <NumberField id="marquee-speed-mobile" label="Velocidad móvil (segundos)" value={content.marqueeSpeedMobile} onChange={(value) => setContent((current) => ({ ...current, marqueeSpeedMobile: value }))} />
-      </div>
-
       <h2 className="admin-card__title homepage-settings__section">Sección de cotización</h2>
       <div className="form-grid">
         <TextField id="quote-title" label="Título" value={content.quoteTitle} onChange={(value) => setText('quoteTitle', value)} />
@@ -113,11 +108,15 @@ export function HomepageSettingsForm({ settings }: { settings: HomepageSettings 
         <TextField id="featured-title" label="Título — Recién llegado" value={content.featuredTitle} onChange={(value) => setText('featuredTitle', value)} />
       </div>
 
-      <h2 className="admin-card__title homepage-settings__section">Marquee</h2>
+      <h2 className="admin-card__title homepage-settings__section">Marquee (mensaje que pasa)</h2>
       <div className="form-field">
         <label htmlFor="marquee-items">Contenido del marquee</label>
         <textarea id="marquee-items" required rows={8} value={marquee} onChange={(event) => setMarquee(event.target.value)} />
         <small className="admin-muted">Escribe un mensaje por línea. Puedes dejar solamente uno.</small>
+      </div>
+      <div className="form-grid">
+        <NumberField id="marquee-speed-desktop" label="Velocidad desktop (segundos)" value={content.marqueeSpeedDesktop} onChange={(value) => setContent((current) => ({ ...current, marqueeSpeedDesktop: value }))} />
+        <NumberField id="marquee-speed-mobile" label="Velocidad móvil (segundos)" value={content.marqueeSpeedMobile} onChange={(value) => setContent((current) => ({ ...current, marqueeSpeedMobile: value }))} />
       </div>
 
       {error && <p className="admin-login__error homepage-settings__notice">{error}</p>}
