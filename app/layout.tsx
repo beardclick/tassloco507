@@ -34,8 +34,8 @@ const archivo = Archivo({
   display: 'swap',
 });
 
-// La tienda entera lee de la base de datos (Supabase): todo se renderiza por request.
-export const dynamic = 'force-dynamic';
+// Las páginas públicas se regeneran como respaldo una vez por hora.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),

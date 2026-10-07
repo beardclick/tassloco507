@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { isAdminRequest } from '@/lib/auth';
 import { saveHomepageSettings } from '@/lib/homepage-settings';
 
@@ -20,6 +21,7 @@ export async function PUT(request: Request) {
     }
 
     const settings = await saveHomepageSettings({ ...body, heroImage, marqueeItems });
+    revalidatePath('/');
     return NextResponse.json({ ok: true, settings });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'No se pudo guardar';

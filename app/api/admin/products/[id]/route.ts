@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { invalidatePublicCatalog } from '@/lib/public-cache';
 import { isAdminRequest } from '@/lib/auth';
 import { deleteProduct, updateProduct } from '@/lib/db';
 import { parseProductInput, resolveCategories } from '@/lib/admin';
@@ -19,6 +20,7 @@ export async function PUT(
     if (!updated) {
       return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
     }
+    invalidatePublicCatalog();
     return NextResponse.json({ ok: true, product: updated });
   } catch (e) {
     return NextResponse.json({ error: errMsg(e) }, { status: 500 });
@@ -37,5 +39,6 @@ export async function DELETE(
   if (!ok) {
     return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
   }
+  invalidatePublicCatalog();
   return NextResponse.json({ ok: true });
 }

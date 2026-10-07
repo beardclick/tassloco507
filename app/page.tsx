@@ -12,7 +12,8 @@ import { ArrowRightIcon, CashIcon, ShieldIcon, TruckIcon, WhatsappIcon } from '@
 import { SITE } from '@/lib/site';
 import { getHomepageSettings } from '@/lib/homepage-settings';
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-static';
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const homepage = await getHomepageSettings();

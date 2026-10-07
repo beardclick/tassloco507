@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { invalidatePublicCatalog } from '@/lib/public-cache';
 import { isAdminRequest } from '@/lib/auth';
 import { deleteCategory, updateCategory } from '@/lib/db';
 
@@ -20,6 +21,7 @@ export async function PUT(
   if (!updated) {
     return NextResponse.json({ error: 'Categoría no encontrada' }, { status: 404 });
   }
+  invalidatePublicCatalog();
   return NextResponse.json({ ok: true, category: updated });
 }
 
@@ -35,5 +37,6 @@ export async function DELETE(
   if (!ok) {
     return NextResponse.json({ error: 'Categoría no encontrada' }, { status: 404 });
   }
+  invalidatePublicCatalog();
   return NextResponse.json({ ok: true });
 }

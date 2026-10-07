@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { invalidatePublicCatalog } from '@/lib/public-cache';
 import { isAdminRequest } from '@/lib/auth';
 import { createCategory } from '@/lib/db';
 
@@ -17,5 +18,6 @@ export async function POST(req: Request) {
     description: String(body.description ?? '').trim(),
     image: body.image ? String(body.image).trim() : null,
   });
+  invalidatePublicCatalog();
   return NextResponse.json({ ok: true, category });
 }

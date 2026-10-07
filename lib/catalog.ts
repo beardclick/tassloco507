@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import type { ProductSummary } from './client-types';
 import {
   getCategories as dbGetCategories,
@@ -69,11 +70,19 @@ export interface CategoryNode extends Category {
   children: CategoryNode[];
 }
 
-// `cache` de React memoiza el resultado por petición: aunque una página llame a
-// loadProducts/loadCategories varias veces, la BD solo se consulta una vez.
-export const loadProducts = cache(async (): Promise<Product[]> => dbGetProducts());
+// Caché persistente entre visitas y memoización dentro de cada renderizado.
+// El admin invalida public-catalog después de editar productos o categorías.
+export const loadProducts = cache(unstable_cache(
+  async (): Promise<Product[]> => dbGetProducts(),
+  ['public-products'],
+  { revalidate: 3600, tags: ['public-catalog'] },
+));
 
-export const loadCategories = cache(async (): Promise<Category[]> => dbGetCategories());
+export const loadCategories = cache(unstable_cache(
+  async (): Promise<Category[]> => dbGetCategories(),
+  ['public-categories'],
+  { revalidate: 3600, tags: ['public-catalog'] },
+));
 
 async function catById(): Promise<Map<number, Category>> {
   return new Map((await loadCategories()).map((c) => [c.id, c]));

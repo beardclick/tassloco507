@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { invalidatePublicCatalog } from '@/lib/public-cache';
 import { isAdminRequest } from '@/lib/auth';
 import { createProduct } from '@/lib/db';
 import { parseProductInput, resolveCategories } from '@/lib/admin';
@@ -15,6 +16,7 @@ export async function POST(req: Request) {
   }
   try {
     const product = await createProduct(input, await resolveCategories(input.categoryIds));
+    invalidatePublicCatalog();
     return NextResponse.json({ ok: true, product });
   } catch (e) {
     return NextResponse.json({ error: errMsg(e) }, { status: 500 });
