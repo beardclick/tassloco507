@@ -2,7 +2,7 @@ import 'server-only';
 
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { getSupabase, STORAGE_BUCKET } from './supabase';
+import { getSupabase, PRIVATE_STORAGE_BUCKET } from './supabase';
 import { getAdmins, getSupabaseAuthUsers } from './db';
 
 const prefsPath = path.join(process.cwd(), 'data', 'notification-prefs.json');
@@ -14,15 +14,13 @@ function hasSupabaseConfig(): boolean {
 
 async function readDisabled(): Promise<string[]> {
   if (hasSupabaseConfig()) {
-    try {
-      const { data, error } = await getSupabase().storage.from(STORAGE_BUCKET).download(remotePrefsPath);
-      if (!error && data) {
-        const parsed = JSON.parse(await data.text()) as { disabled?: string[] };
-        if (Array.isArray(parsed.disabled)) return parsed.disabled;
-      }
-    } catch {
-      // aún no existe el objeto remoto
+    const { data, error } = await getSupabase().storage.from(PRIVATE_STORAGE_BUCKET).download(remotePrefsPath);
+    if (error || !data) throw new Error('No se pudieron leer las preferencias de notificaciones.');
+    const parsed = JSON.parse(await data.text()) as { disabled?: unknown };
+    if (!Array.isArray(parsed.disabled) || !parsed.disabled.every(email => typeof email === 'string')) {
+      throw new Error('Las preferencias de notificaciones no son válidas.');
     }
+    return parsed.disabled.map(email => email.trim().toLowerCase());
   }
   try {
     const raw = await readFile(prefsPath, 'utf8');
@@ -37,7 +35,7 @@ async function readDisabled(): Promise<string[]> {
 async function writeDisabled(disabled: string[]): Promise<void> {
   const payload = JSON.stringify({ disabled });
   if (hasSupabaseConfig()) {
-    const { error } = await getSupabase().storage.from(STORAGE_BUCKET).upload(
+    const { error } = await getSupabase().storage.from(PRIVATE_STORAGE_BUCKET).upload(
       remotePrefsPath,
       payload,
       { upsert: true, contentType: 'application/json', cacheControl: '0' },

@@ -2,6 +2,8 @@ import { getSupabase } from './supabase';
 import type { Category, Product, ProductCategory, Prices } from './catalog';
 import type { OrderStatus } from './order';
 import { getProductMetaMap, removeProductMeta, setProductMeta } from './product-meta';
+import { isAuthorizedAuthAdmin } from './supabase-admin-auth';
+import { revokeSubjectSessions } from './sessions';
 
 export type { OrderStatus };
 export { ORDER_STATUSES } from './order';
@@ -19,6 +21,7 @@ export interface Order {
   number: string;
   createdAt: string;
   status: OrderStatus;
+  customerId?: number | null;
   customer: {
     nombre: string;
     apellido: string;
@@ -147,6 +150,7 @@ function rowToOrder(row: any): Order {
     number: row.number,
     createdAt: row.created_at,
     status: row.status,
+    customerId: row.customer_id ?? null,
     customer: row.customer ?? {},
     delivery: row.delivery ?? {},
     payment: row.payment ?? {},
@@ -162,6 +166,7 @@ function orderToRow(order: Order): Record<string, unknown> {
     number: order.number,
     created_at: order.createdAt,
     status: order.status,
+    customer_id: order.customerId ?? null,
     customer: order.customer,
     delivery: order.delivery,
     payment: order.payment,
@@ -430,6 +435,12 @@ export async function getOrders(): Promise<Order[]> {
   return (data ?? []).map(rowToOrder);
 }
 
+export async function getOrdersForCustomer(customerId: number): Promise<Order[]> {
+  const { data, error } = await sb().from('orders').select('*').eq('customer_id', customerId).order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(rowToOrder);
+}
+
 export async function getOrderById(id: string): Promise<Order | undefined> {
   const { data, error } = await sb().from('orders').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
@@ -525,10 +536,12 @@ export async function updateCustomer(
   if (data.passwordHash) row.password_hash = data.passwordHash;
   const { data: updated, error } = await sb().from('customers').update(row).eq('id', id).select().single();
   if (error) throw error;
+  if (data.passwordHash || row.email !== prev.email) await revokeSubjectSessions('customer', String(id));
   return rowToCustomer(updated);
 }
 
 export async function deleteCustomer(id: number): Promise<boolean> {
+  await revokeSubjectSessions('customer', String(id));
   const { error, count } = await sb().from('customers').delete({ count: 'exact' }).eq('id', id);
   if (error) throw error;
   return (count ?? 0) > 0;
@@ -603,10 +616,12 @@ export async function updateAdmin(
   if (data.passwordHash) row.password_hash = data.passwordHash;
   const { data: updated, error } = await sb().from('admins').update(row).eq('id', id).select().single();
   if (error) throw error;
+  if (data.passwordHash || row.email !== prev.email) await revokeSubjectSessions('admin', `db:${id}`);
   return rowToAdmin(updated);
 }
 
 export async function deleteAdmin(id: number): Promise<boolean> {
+  await revokeSubjectSessions('admin', `db:${id}`);
   const { error, count } = await sb().from('admins').delete({ count: 'exact' }).eq('id', id);
   if (error) throw error;
   return (count ?? 0) > 0;
@@ -621,7 +636,7 @@ export interface AuthUser {
 export async function getSupabaseAuthUsers(): Promise<AuthUser[]> {
   const { data, error } = await getSupabase().auth.admin.listUsers();
   if (error) return [];
-  return (data.users ?? []).map((u) => ({
+  return (data.users ?? []).filter(isAuthorizedAuthAdmin).map((u) => ({
     id: u.id,
     email: u.email ?? '',
     confirmed: Boolean(u.email_confirmed_at),
@@ -630,5 +645,6 @@ export async function getSupabaseAuthUsers(): Promise<AuthUser[]> {
 
 export async function updateSupabaseAuthPassword(id: string, password: string): Promise<boolean> {
   const { error } = await getSupabase().auth.admin.updateUserById(id, { password });
+  if (!error) await revokeSubjectSessions('admin', `auth:${id}`);
   return !error;
 }

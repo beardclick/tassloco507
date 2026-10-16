@@ -7,19 +7,24 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:security": "node --test tests/security.test.cjs tests/database-security.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
-    "next": "^15.1.0",
+    "next": "^15.5.28",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^6.28.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.10",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.7.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.30"
   }
 }

@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Admin } from '@/lib/db';
 
-export function AdminForm({ admin }: { admin?: Admin }) {
+export function AdminForm({ admin }: { admin?: Omit<Admin, 'passwordHash'> }) {
   const router = useRouter();
   const isEdit = Boolean(admin);
   const [nombre, setNombre] = useState(admin?.nombre ?? '');
@@ -57,11 +57,11 @@ export function AdminForm({ admin }: { admin?: Admin }) {
           <input
             id="a-pass"
             type="password"
-            minLength={6}
+            minLength={12}
             required={!isEdit}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 12 caracteres"
           />
         </div>
       </div>

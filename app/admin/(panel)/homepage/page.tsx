@@ -1,9 +1,11 @@
+import { requireAdmin } from '@/lib/auth';
 import { HomepageSettingsForm } from '@/components/admin/HomepageSettingsForm';
 import { getHomepageSettings } from '@/lib/homepage-settings';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomepageAdminPage() {
+  await requireAdmin();
   const settings = await getHomepageSettings();
 
   return (

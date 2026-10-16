@@ -7,7 +7,7 @@ import { AdminShell } from '@/components/admin/AdminShell';
 export default async function AdminPanelLayout({ children }: { children: ReactNode }) {
   const store = await cookies();
   const token = store.get(AUTH_COOKIE)?.value;
-  if (!verifyToken(token)) redirect('/admin/login');
+  if (!(await verifyToken(token))) redirect('/admin/login');
 
   return <AdminShell>{children}</AdminShell>;
 }

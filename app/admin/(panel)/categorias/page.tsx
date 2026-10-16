@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { flattenCategories } from '@/lib/admin';
 import { getCategoryById } from '@/lib/db';
@@ -7,6 +8,7 @@ import { DeleteCategoryButton } from '@/components/admin/DeleteCategoryButton';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminCategorias() {
+  await requireAdmin();
   const options = await flattenCategories();
   const cats = await Promise.all(
     options.map(async (c) => {

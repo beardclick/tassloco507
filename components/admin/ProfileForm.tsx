@@ -28,7 +28,8 @@ export function ProfileForm() {
       });
       const data = await res.json();
       if (res.ok && data.ok) {
-        setMessage('Contraseña actualizada correctamente.');
+        setMessage('Contraseña actualizada. Vuelve a iniciar sesión.');
+        window.location.assign('/admin/login');
         setPassword('');
         setConfirm('');
       } else {
@@ -47,11 +48,11 @@ export function ProfileForm() {
       <div className="form-grid">
         <div className="form-field">
           <label htmlFor="pf-pass">Nueva contraseña</label>
-          <PasswordInput id="pf-pass" minLength={6} required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput id="pf-pass" minLength={12} required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <div className="form-field">
           <label htmlFor="pf-confirm">Confirmar contraseña</label>
-          <PasswordInput id="pf-confirm" minLength={6} required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+          <PasswordInput id="pf-confirm" minLength={12} required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
         </div>
       </div>
       {error && <p className="admin-login__error" style={{ marginTop: 12 }}>{error}</p>}

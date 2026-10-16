@@ -11,9 +11,9 @@ export async function POST(req: Request) {
   const nombre = String(body.nombre ?? '').trim();
   const email = String(body.email ?? '').trim().toLowerCase();
   const password = String(body.password ?? '');
-  if (!nombre || !email || password.length < 6) {
+  if (!nombre || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || password.length < 12 || password.length > 256) {
     return NextResponse.json(
-      { error: 'Completa nombre, correo válido y contraseña (mín. 6 caracteres)' },
+      { error: 'Completa nombre, correo válido y contraseña (mín. 12 caracteres)' },
       { status: 400 },
     );
   }

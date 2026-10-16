@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { getProductById } from '@/lib/db';
 import { flattenCategories } from '@/lib/admin';
@@ -10,6 +11,7 @@ export default async function EditarProductoPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const product = await getProductById(Number(id));
   if (!product) notFound();

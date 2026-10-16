@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { notFound } from 'next/navigation';
 import { getCategoryById } from '@/lib/db';
 import { flattenCategories } from '@/lib/admin';
@@ -10,6 +11,7 @@ export default async function EditarCategoriaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const category = await getCategoryById(Number(id));
   if (!category) notFound();

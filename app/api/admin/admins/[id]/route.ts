@@ -22,10 +22,13 @@ export async function PUT(
     return NextResponse.json({ error: 'Ya existe otro administrador con ese correo' }, { status: 400 });
   }
   const password = String(body.password ?? '');
+  if (password && (password.length < 12 || password.length > 256)) {
+    return NextResponse.json({ error: 'La contraseña debe tener entre 12 y 256 caracteres.' }, { status: 400 });
+  }
   const updated = await updateAdmin(Number(id), {
     nombre,
     email,
-    passwordHash: password.length >= 6 ? hashPassword(password) : undefined,
+    passwordHash: password.length >= 12 ? hashPassword(password) : undefined,
   });
   if (!updated) {
     return NextResponse.json({ error: 'Administrador no encontrado' }, { status: 404 });

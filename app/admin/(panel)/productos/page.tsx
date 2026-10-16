@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { getProducts } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
@@ -14,6 +15,7 @@ export default async function AdminProductos({
 }: {
   searchParams: Promise<{ q?: string; category?: string; sort?: string; status?: string; page?: string }>;
 }) {
+  await requireAdmin();
   const { q, category, sort = 'date-desc', status = 'all', page } = await searchParams;
   const query = (q ?? '').toLowerCase().trim();
   const categories = await flattenCategories();

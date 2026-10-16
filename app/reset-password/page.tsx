@@ -39,8 +39,8 @@ export default function ResetPasswordPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
+    if (password.length < 12) {
+      setError('La contraseña debe tener al menos 12 caracteres.');
       return;
     }
     if (password !== confirm) {
@@ -85,11 +85,11 @@ export default function ResetPasswordPage() {
           <form onSubmit={handleSubmit}>
             <div className="form-field">
               <label htmlFor="rp-pass">Nueva contraseña</label>
-              <PasswordInput id="rp-pass" minLength={6} required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordInput id="rp-pass" minLength={12} required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div className="form-field">
               <label htmlFor="rp-confirm">Confirmar contraseña</label>
-              <PasswordInput id="rp-confirm" minLength={6} required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <PasswordInput id="rp-confirm" minLength={12} required autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
             </div>
 
             {error && <p className="admin-login__error">{error}</p>}

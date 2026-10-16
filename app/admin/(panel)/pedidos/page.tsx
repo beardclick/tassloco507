@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { getOrders } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
@@ -16,6 +17,7 @@ export default async function AdminPedidos({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requireAdmin();
   const { page } = await searchParams;
   const orders = await getOrders();
 

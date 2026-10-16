@@ -19,8 +19,8 @@ export async function PUT(req: Request) {
 
   const body = await req.json();
   const password = String(body.password ?? '');
-  if (password.length < 6) {
-    return NextResponse.json({ error: 'La contraseña debe tener al menos 6 caracteres.' }, { status: 400 });
+  if (password.length < 12 || password.length > 256) {
+    return NextResponse.json({ error: 'La contraseña debe tener al menos 12 caracteres.' }, { status: 400 });
   }
 
   // 1) Administrador en la tabla `admins`.

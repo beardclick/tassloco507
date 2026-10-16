@@ -202,10 +202,10 @@ export default function CheckoutPage() {
                   </label>
                   {createAccount && (
                     <PasswordInput
-                      minLength={6}
+                      minLength={12}
                       value={accountPassword}
                       onChange={(e) => setAccountPassword(e.target.value)}
-                      placeholder="Contraseña (mín. 6 caracteres)"
+                      placeholder="Contraseña (mín. 12 caracteres)"
                       style={{ marginTop: 8 }}
                     />
                   )}

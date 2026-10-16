@@ -42,8 +42,9 @@ accesorios racing y ropa streetwear en Panamá 🇵🇦.
 ## Panel de administración
 
 - URL: **`/admin`** (ej. `http://localhost:3000/admin`)
-- Credenciales por defecto: usuario **`admin`** · contraseña **`tassloco507`**
-- Cambiarlas con variables de entorno: `ADMIN_USER`, `ADMIN_PASSWORD`, `ADMIN_SECRET`.
+- No hay credenciales ni secretos predeterminados. Configura `ADMIN_SECRET` y `AUTH_SECRET` con valores aleatorios distintos de al menos 32 caracteres.
+- El acceso requiere un registro en `admins`, un usuario Supabase Auth confirmado con `app_metadata.role = admin` o incluido en `SUPABASE_ADMIN_EMAILS`, o las variables opcionales `ADMIN_USER` y `ADMIN_PASSWORD` (mínimo 12 caracteres).
+- Antes de desplegar las correcciones de seguridad, sigue [SECURITY.md](SECURITY.md): migración, traslado de configuración privada y variables de producción.
 
 Funciones:
 - **Productos**: listar, buscar, crear, editar y eliminar (CRUD). Los cambios se reflejan al instante en la tienda.
@@ -95,6 +96,8 @@ scripts/scrape.mjs      # importador del catálogo
 ### 1. Supabase (base de datos + imágenes)
 1. Crea un proyecto en [supabase.com](https://supabase.com) (gratis).
 2. En **SQL Editor** ejecuta el contenido de `supabase/schema.sql` (crea las tablas).
+   El esquema activa RLS y bloquea el acceso directo de `anon` y `authenticated` a las cinco tablas. La tienda utiliza `service_role` desde el servidor; el navegador utiliza Supabase solo para Auth.
+   Para proyectos existentes, ejecuta `supabase/migrations/202610150001_enable_table_rls.sql` en SQL Editor. La consulta final debe mostrar cinco filas con `rls_enabled = true`, `anon_has_access = false` y `authenticated_has_access = false`. Después comprueba catálogo, inicio de sesión, registro, creación de pedidos y panel de administración. Guardar el archivo o desplegar Next.js no aplica el SQL a la base de datos.
 3. Crea un **bucket público** en **Storage** llamado `product-images`.
 4. En **Project Settings → API** copia la **URL** y la **`service_role` key**.
 5. Siembra el catálogo:

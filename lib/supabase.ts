@@ -1,6 +1,8 @@
+import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 export const STORAGE_BUCKET = 'product-images';
+export const PRIVATE_STORAGE_BUCKET = 'server-settings';
 
 let _client: SupabaseClient | null = null;
 
@@ -14,6 +16,6 @@ export function getSupabase(): SupabaseClient {
       'Faltan las variables SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY. Configúralas en .env.local o en Vercel.',
     );
   }
-  if (!_client) _client = createClient(url, key, { auth: { persistSession: false } });
+  if (!_client) _client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
   return _client;
 }

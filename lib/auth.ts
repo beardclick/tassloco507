@@ -1,74 +1,74 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import 'server-only';
+import { timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
-import { getAdminByEmail } from './db';
+import { redirect } from 'next/navigation';
+import { cache } from 'react';
+import { getAdminByEmail, getAdminById } from './db';
 import { verifyPassword } from './password';
+import { createSession, credentialVersion, readSession } from './sessions';
+import { getSupabase } from './supabase';
+import { createAdminAuthClient, isAuthorizedAuthAdmin } from './supabase-admin-auth';
 
-const SECRET = process.env.ADMIN_SECRET || 'tassloco507-local-dev-secret';
-export const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tassloco507';
 export const AUTH_COOKIE = 'tassloco_admin';
+export const ADMIN_USER = process.env.ADMIN_USER?.trim().toLowerCase() || '';
 
 function safeEqual(a: string, b: string): boolean {
   const ba = Buffer.from(a);
   const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return timingSafeEqual(ba, bb);
+  return ba.length === bb.length && timingSafeEqual(ba, bb);
 }
 
-/**
- * Verifica credenciales de admin: primero contra la tabla `admins` y,
- * como respaldo, contra las credenciales legacy de variables de entorno.
- * Devuelve la identidad (email) si es válido, o null.
- */
-export async function verifyCredentials(email: string, password: string): Promise<string | null> {
-  const normalized = email.trim().toLowerCase();
-  if (normalized) {
-    try {
-      const admin = await getAdminByEmail(normalized);
-      if (admin && verifyPassword(password, admin.passwordHash)) {
-        return normalized;
-      }
-    } catch {
-      // tabla admins aún no existe → cae al fallback
-    }
+function legacyCredentials(): { user: string; password: string } | null {
+  const user = process.env.ADMIN_USER?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!user || !password || password.length < 12 || /^(tassloco507|una-contrasena-segura)$/i.test(password)) return null;
+  return { user, password };
+}
+
+export async function loginAdmin(email: string, password: string): Promise<string | null> {
+  const identity = email.trim().toLowerCase();
+  const admin = await getAdminByEmail(identity);
+  if (admin && verifyPassword(password, admin.passwordHash)) {
+    return createSession({ kind: 'admin', subject_id: `db:${admin.id}`, identity, credential_version: credentialVersion(admin.passwordHash) });
   }
-  if (safeEqual(normalized, ADMIN_USER) && safeEqual(password, ADMIN_PASSWORD)) {
-    return ADMIN_USER;
+  const legacy = legacyCredentials();
+  if (legacy && safeEqual(identity, legacy.user) && safeEqual(password, legacy.password)) {
+    return createSession({ kind: 'admin', subject_id: 'env', identity, credential_version: credentialVersion(legacy.password) });
+  }
+  if (!identity.includes('@')) return null;
+  const { data, error } = await createAdminAuthClient().auth.signInWithPassword({ email: identity, password });
+  if (error || !data.user || !isAuthorizedAuthAdmin(data.user)) return null;
+  return createSession({ kind: 'admin', subject_id: `auth:${data.user.id}`, identity, credential_version: credentialVersion(data.user.updated_at ?? '') });
+}
+
+export async function verifyToken(token: string | undefined | null): Promise<string | null> {
+  const session = await readSession(token, 'admin');
+  if (!session) return null;
+  if (session.subject_id.startsWith('db:')) {
+    const admin = await getAdminById(Number(session.subject_id.slice(3)));
+    return admin && admin.email.toLowerCase() === session.identity && credentialVersion(admin.passwordHash) === session.credential_version ? session.identity : null;
+  }
+  if (session.subject_id === 'env') {
+    const legacy = legacyCredentials();
+    return legacy && legacy.user === session.identity && credentialVersion(legacy.password) === session.credential_version ? session.identity : null;
+  }
+  if (session.subject_id.startsWith('auth:')) {
+    const { data, error } = await getSupabase().auth.admin.getUserById(session.subject_id.slice(5));
+    return !error && data.user && isAuthorizedAuthAdmin(data.user) && data.user.email?.toLowerCase() === session.identity
+      && credentialVersion(data.user.updated_at ?? '') === session.credential_version ? session.identity : null;
   }
   return null;
 }
 
-export function signToken(identity = ADMIN_USER): string {
-  const payload = `${identity}:${Date.now()}`;
-  const sig = createHmac('sha256', SECRET).update(payload).digest('hex');
-  // base64url evita caracteres que se codifican en la cookie (p.ej. "@" y ":")
-  const encoded = Buffer.from(payload, 'utf8').toString('base64url');
-  return `${encoded}.${sig}`;
-}
+export const currentAdminIdentity = cache(async function currentAdminIdentity(): Promise<string | null> {
+  const store = await cookies();
+  return verifyToken(store.get(AUTH_COOKIE)?.value);
+});
 
-export function verifyToken(token: string | undefined | null): string | null {
-  if (!token) return null;
-  const dot = token.indexOf('.');
-  if (dot === -1) return null;
-  const encoded = token.slice(0, dot);
-  const sig = token.slice(dot + 1);
-  let payload: string;
-  try {
-    payload = Buffer.from(encoded, 'base64url').toString('utf8');
-  } catch {
-    return null;
-  }
-  const expected = createHmac('sha256', SECRET).update(payload).digest('hex');
-  if (!safeEqual(sig, expected)) return null;
-  return payload.split(':')[0] || null;
+export async function requireAdmin(): Promise<void> {
+  if (!(await currentAdminIdentity())) redirect('/admin/login');
 }
 
 export async function isAdminRequest(): Promise<boolean> {
-  const store = await cookies();
-  return Boolean(verifyToken(store.get(AUTH_COOKIE)?.value));
-}
-
-export async function currentAdminIdentity(): Promise<string | null> {
-  const store = await cookies();
-  return verifyToken(store.get(AUTH_COOKIE)?.value);
+  return Boolean(await currentAdminIdentity());
 }

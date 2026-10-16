@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { getAdmins, getSupabaseAuthUsers } from '@/lib/db';
 import { formatDate } from '@/lib/dates';
@@ -15,6 +16,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default async function AdministradoresPage() {
+  await requireAdmin();
   const [dbAdmins, authUsers, disabled] = await Promise.all([
     getAdmins(),
     getSupabaseAuthUsers(),

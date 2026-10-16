@@ -74,7 +74,7 @@ export interface CategoryNode extends Category {
 // El admin invalida public-catalog después de editar productos o categorías.
 export const loadProducts = cache(unstable_cache(
   async (): Promise<Product[]> => dbGetProducts(),
-  ['public-products'],
+  ['public-products-v2-private-settings'],
   { revalidate: 3600, tags: ['public-catalog'] },
 ));
 

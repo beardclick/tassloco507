@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getAdminById } from '@/lib/db';
@@ -10,9 +11,12 @@ export default async function EditarAdministradorPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const admin = await getAdminById(Number(id));
   if (!admin) notFound();
+  const { passwordHash: _passwordHash, ...safeAdmin } = admin;
+  void _passwordHash;
 
   return (
     <div>
@@ -22,7 +26,7 @@ export default async function EditarAdministradorPage({
       <h1 className="admin-title" style={{ margin: '6px 0 20px' }}>
         Editar administrador
       </h1>
-      <AdminForm admin={admin} />
+      <AdminForm admin={safeAdmin} />
     </div>
   );
 }

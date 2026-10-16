@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCustomerById } from '@/lib/db';
@@ -10,9 +11,12 @@ export default async function EditarClientePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const customer = await getCustomerById(Number(id));
   if (!customer) notFound();
+  const { passwordHash: _passwordHash, ...safeCustomer } = customer;
+  void _passwordHash;
 
   return (
     <div>
@@ -22,7 +26,7 @@ export default async function EditarClientePage({
       <h1 className="admin-title" style={{ margin: '6px 0 20px' }}>
         Editar cliente
       </h1>
-      <CustomerForm customer={customer} />
+      <CustomerForm customer={safeCustomer} />
     </div>
   );
 }

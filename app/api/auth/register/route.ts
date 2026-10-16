@@ -2,46 +2,30 @@ import { NextResponse } from 'next/server';
 import { createCustomer, getCustomerByEmail } from '@/lib/db';
 import { hashPassword } from '@/lib/password';
 import { CUSTOMER_COOKIE, signCustomerToken } from '@/lib/customer-auth';
+import { cookieOptions } from '@/lib/session-token';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { readJsonObject, textField, emailField, passwordField, errorResponse, RequestError } from '@/lib/request-security';
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  // Honeypot anti-spam: si el campo oculto "website" viene lleno, es un bot.
-  if (String(body.website ?? '').trim()) {
-    return NextResponse.json({ ok: false, error: 'Solicitud inválida' }, { status: 400 });
-  }
-  const nombre = String(body.nombre ?? '').trim();
-  const apellido = String(body.apellido ?? '').trim();
-  const email = String(body.email ?? '').trim().toLowerCase();
-  const telefono = String(body.telefono ?? '').trim();
-  const password = String(body.password ?? '');
-
-  if (!nombre || !email || password.length < 6) {
-    return NextResponse.json(
-      { ok: false, error: 'Completa nombre, un correo válido y una contraseña de al menos 6 caracteres' },
-      { status: 400 },
-    );
-  }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-    return NextResponse.json({ ok: false, error: 'Correo no válido' }, { status: 400 });
-  }
-  if (await getCustomerByEmail(email)) {
-    return NextResponse.json({ ok: false, error: 'Ya existe una cuenta con ese correo' }, { status: 400 });
-  }
-
-  const customer = await createCustomer({
-    nombre,
-    apellido,
-    email,
-    telefono,
-    passwordHash: hashPassword(password),
-  });
-
-  const res = NextResponse.json({ ok: true, customer: { id: customer.id, nombre: customer.nombre, email: customer.email } });
-  res.cookies.set(CUSTOMER_COOKIE, signCustomerToken(customer.id, customer.email), {
-    httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7,
-  });
-  return res;
+  try {
+    const limited = await enforceRateLimit(req, 'registration-ip', 5, 3600);
+    if (limited) return limited;
+    const body = await readJsonObject(req);
+    if (body.website) throw new RequestError('Solicitud inválida.');
+    const nombre = textField(body.nombre, 100, true);
+    const apellido = textField(body.apellido, 100);
+    const email = emailField(body.email);
+    const telefono = textField(body.telefono, 40);
+    const password = passwordField(body.password, 12);
+    const accountLimited = await enforceRateLimit(req, 'registration-account', 3, 3600, email);
+    if (accountLimited) return accountLimited;
+    if (await getCustomerByEmail(email)) {
+      throw new RequestError('No se pudo crear la cuenta. Si ya tienes una, inicia sesión.');
+    }
+    const customer = await createCustomer({ nombre, apellido, email, telefono, passwordHash: hashPassword(password) });
+    const token = await signCustomerToken(customer);
+    const res = NextResponse.json({ ok: true, customer: { id: customer.id, nombre: customer.nombre, email: customer.email } });
+    res.cookies.set(CUSTOMER_COOKIE, token, cookieOptions('customer'));
+    return res;
+  } catch (error) { return errorResponse(error); }
 }

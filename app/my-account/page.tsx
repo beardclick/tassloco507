@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { currentCustomer } from '@/lib/customer-auth';
-import { getCustomerByEmail, getOrders } from '@/lib/db';
+import { getCustomerByEmail, getOrdersForCustomer } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
 import { formatDate } from '@/lib/dates';
 import { StatusBadge } from '@/components/admin/StatusBadge';
@@ -32,9 +32,7 @@ export default async function MyAccountPage() {
   }
 
   const customer = await getCustomerByEmail(session.email);
-  const orders = (await getOrders()).filter(
-    (o) => o.customer.email.toLowerCase() === session.email.toLowerCase(),
-  );
+  const orders = await getOrdersForCustomer(session.id);
 
   return (
     <>

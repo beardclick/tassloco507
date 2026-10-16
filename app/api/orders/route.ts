@@ -1,129 +1,67 @@
 import { NextResponse } from 'next/server';
-import { createCustomer, createOrder, getCustomerByEmail, getOrders, type OrderItem } from '@/lib/db';
+import { createCustomer, createOrder, getCustomerByEmail, getProductBySlug, type Customer } from '@/lib/db';
 import { sendOrderEmails } from '@/lib/email';
 import { CUSTOMER_COOKIE, currentCustomer, signCustomerToken } from '@/lib/customer-auth';
 import { hashPassword } from '@/lib/password';
+import { cookieOptions } from '@/lib/session-token';
+import { enforceRateLimit } from '@/lib/rate-limit';
+import { priceCheckoutItems } from '@/lib/checkout-security';
+import { readJsonObject, textField, emailField, passwordField, errorResponse, RequestError } from '@/lib/request-security';
 
-interface OrderPayload {
-  customer?: { nombre?: string; apellido?: string; email?: string; telefono?: string };
-  delivery?: { method?: string; provincia?: string; ciudad?: string; direccion?: string; referencia?: string };
-  payment?: { method?: string };
-  items?: OrderItem[];
-  subtotal?: number;
-  createAccount?: boolean;
-  password?: string;
-  website?: string;
+function object(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new RequestError('Datos incompletos.');
+  return value as Record<string, unknown>;
 }
 
 export async function POST(req: Request) {
-  let body: OrderPayload = {};
   try {
-    body = (await req.json()) as OrderPayload;
-  } catch {
-    body = {};
-  }
-
-  const nombre = String(body.customer?.nombre ?? '');
-  const apellido = String(body.customer?.apellido ?? '');
-  const email = String(body.customer?.email ?? '').trim().toLowerCase();
-  const telefono = String(body.customer?.telefono ?? '');
-
-  // Honeypot anti-spam
-  if (String(body.website ?? '').trim()) {
-    return NextResponse.json({ ok: false, error: 'Solicitud inválida' }, { status: 400 });
-  }
-
-  const items: OrderItem[] = Array.isArray(body.items)
-    ? body.items.map((i) => ({
-        slug: String(i.slug ?? ''),
-        name: String(i.name ?? ''),
-        price: Number(i.price ?? 0),
-        qty: Math.max(1, Number(i.qty ?? 1)),
-        image: i.image ? String(i.image) : null,
-      }))
-    : [];
-
-  if (items.length === 0) {
-    return NextResponse.json({ error: 'El pedido está vacío' }, { status: 400 });
-  }
-
-  const createAccount = Boolean(body.createAccount);
-  const password = String(body.password ?? '');
-
-  // Si el correo ya está registrado y el usuario no ha iniciado sesión como tal, obligar a login.
-  const existing = email ? await getCustomerByEmail(email) : undefined;
-  const session = await currentCustomer();
-  const isAuth = session ? session.email.toLowerCase() === email : false;
-  if (existing && !isAuth) {
-    return NextResponse.json(
-      { ok: false, code: 'LOGIN_REQUIRED', error: 'Este correo ya está registrado. Inicia sesión para continuar.' },
-      { status: 409 },
-    );
-  }
-
-  // Si el correo ya tiene pedidos anteriores (como invitado) y no inició sesión → crear cuenta.
-  if (!isAuth && email) {
-    const hasPriorOrders = (await getOrders()).some(
-      (o) => o.customer.email.toLowerCase() === email,
-    );
-    if (hasPriorOrders) {
-      return NextResponse.json(
-        { ok: false, code: 'ACCOUNT_REQUIRED', error: 'Este correo ya tiene pedidos. Crea una cuenta para continuar.' },
-        { status: 409 },
-      );
+    const limited = await enforceRateLimit(req, 'orders-ip', 10, 900);
+    if (limited) return limited;
+    const body = await readJsonObject(req);
+    if (body.website) throw new RequestError('Solicitud inválida.');
+    const customer = object(body.customer);
+    const delivery = object(body.delivery);
+    const payment = object(body.payment);
+    const nombre = textField(customer.nombre, 100, true);
+    const apellido = textField(customer.apellido, 100);
+    const email = emailField(customer.email);
+    const telefono = textField(customer.telefono, 40, true);
+    if (!['envio', 'recoger'].includes(String(delivery.method)) || !['efectivo', 'transferencia'].includes(String(payment.method))) {
+      throw new RequestError('Entrega o pago inválidos.');
     }
-  }
-
-  // Registro opcional desde el checkout.
-  let newCustomer: { id: number; email: string } | null = null;
-  if (createAccount && !existing) {
-    if (password.length < 6) {
-      return NextResponse.json(
-        { ok: false, error: 'La contraseña debe tener al menos 6 caracteres.' },
-        { status: 400 },
-      );
+    const shipping = delivery.method === 'envio';
+    const deliveryData = {
+      method: shipping ? 'envio' as const : 'recoger' as const,
+      provincia: textField(delivery.provincia, 100, shipping),
+      ciudad: textField(delivery.ciudad, 100, shipping),
+      direccion: textField(delivery.direccion, 500, shipping),
+      referencia: textField(delivery.referencia, 500),
+    };
+    const emailLimited = await enforceRateLimit(req, 'orders-account', 5, 900, email);
+    if (emailLimited) return emailLimited;
+    const { items, subtotal } = await priceCheckoutItems(body.items, getProductBySlug);
+    const existing = await getCustomerByEmail(email);
+    const session = await currentCustomer();
+    const isAuth = Boolean(session && session.email === email && session.id === existing?.id);
+    if (existing && !isAuth) {
+      return NextResponse.json({ ok: false, code: 'LOGIN_REQUIRED', error: 'Inicia sesión para continuar con este correo.' }, { status: 409 });
     }
-    const created = await createCustomer({
-      nombre,
-      apellido,
-      email,
-      telefono,
-      passwordHash: hashPassword(password),
+    let newCustomer: Customer | null = null;
+    if (body.createAccount === true && !existing) {
+      const password = passwordField(body.password, 12);
+      newCustomer = await createCustomer({ nombre, apellido, email, telefono, passwordHash: hashPassword(password) });
+    }
+    // Preparar la sesión antes de registrar el pedido para fallar si falta la migración.
+    const token = newCustomer ? await signCustomerToken(newCustomer) : null;
+    const order = await createOrder({
+      status: 'pendiente', customerId: isAuth ? session!.id : newCustomer?.id ?? null,
+      customer: { nombre, apellido, email, telefono }, delivery: deliveryData,
+      payment: { method: payment.method === 'efectivo' ? 'efectivo' : 'transferencia' },
+      items, subtotal, total: subtotal,
     });
-    newCustomer = { id: created.id, email: created.email };
-  }
-
-  const subtotal = Number(body.subtotal ?? items.reduce((n, i) => n + i.price * i.qty, 0));
-
-  const order = await createOrder({
-    status: 'pendiente',
-    customer: { nombre, apellido, email, telefono },
-    delivery: {
-      method: body.delivery?.method === 'recoger' ? 'recoger' : 'envio',
-      provincia: String(body.delivery?.provincia ?? ''),
-      ciudad: String(body.delivery?.ciudad ?? ''),
-      direccion: String(body.delivery?.direccion ?? ''),
-      referencia: String(body.delivery?.referencia ?? ''),
-    },
-    payment: {
-      method: body.payment?.method === 'efectivo' ? 'efectivo' : 'transferencia',
-    },
-    items,
-    subtotal,
-    total: subtotal,
-  });
-
-  // Enviar correos (confirmación al cliente + aviso al admin) sin bloquear el pedido si falla.
-  await sendOrderEmails(order).catch(() => {});
-
-  const res = NextResponse.json({ ok: true, order });
-  if (newCustomer) {
-    res.cookies.set(CUSTOMER_COOKIE, signCustomerToken(newCustomer.id, newCustomer.email), {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7,
-    });
-  }
-  return res;
+    await sendOrderEmails(order).catch(() => {});
+    const res = NextResponse.json({ ok: true, order });
+    if (token) res.cookies.set(CUSTOMER_COOKIE, token, cookieOptions('customer'));
+    return res;
+  } catch (error) { return errorResponse(error); }
 }

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { getSupabase, STORAGE_BUCKET } from '@/lib/supabase';
+import { getSupabase, PRIVATE_STORAGE_BUCKET } from '@/lib/supabase';
 
 export interface ProductMeta {
   draft: boolean;
@@ -22,12 +22,10 @@ function hasSupabaseConfig(): boolean {
 
 async function readMeta(): Promise<ProductMetaMap> {
   if (hasSupabaseConfig()) {
-    try {
-      const { data, error } = await getSupabase().storage.from(STORAGE_BUCKET).download(remoteMetaPath);
-      if (!error && data) return JSON.parse(await data.text()) as ProductMetaMap;
-    } catch {
-      // El objeto se crea al guardar el primer producto.
-    }
+    const { data, error } = await getSupabase().storage.from(PRIVATE_STORAGE_BUCKET).download(remoteMetaPath);
+    // Fallar cerrado: un error de Storage no debe publicar borradores o perder restricciones.
+    if (error || !data) throw new Error('No se pudo leer la configuración privada de productos.');
+    return JSON.parse(await data.text()) as ProductMetaMap;
   }
   try {
     return JSON.parse(await readFile(metaPath, 'utf8')) as ProductMetaMap;
@@ -38,7 +36,7 @@ async function readMeta(): Promise<ProductMetaMap> {
 
 async function writeMeta(meta: ProductMetaMap): Promise<void> {
   if (hasSupabaseConfig()) {
-    const { error } = await getSupabase().storage.from(STORAGE_BUCKET).upload(
+    const { error } = await getSupabase().storage.from(PRIVATE_STORAGE_BUCKET).upload(
       remoteMetaPath,
       JSON.stringify(meta),
       { upsert: true, contentType: 'application/json', cacheControl: '0' },

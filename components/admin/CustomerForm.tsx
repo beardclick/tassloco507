@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Customer } from '@/lib/db';
 
-export function CustomerForm({ customer }: { customer: Customer }) {
+export function CustomerForm({ customer }: { customer: Omit<Customer, 'passwordHash'> }) {
   const router = useRouter();
   const [nombre, setNombre] = useState(customer.nombre);
   const [apellido, setApellido] = useState(customer.apellido);
@@ -63,10 +63,10 @@ export function CustomerForm({ customer }: { customer: Customer }) {
           <input
             id="c-pass"
             type="password"
-            minLength={6}
+            minLength={12}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 12 caracteres"
           />
         </div>
       </div>

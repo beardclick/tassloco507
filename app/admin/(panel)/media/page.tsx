@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { getAllMediaItems } from '@/lib/media';
 import { MediaUploadButton } from '@/components/admin/MediaUploadButton';
 import { Pagination } from '@/components/Pagination';
@@ -18,6 +19,7 @@ export default async function MediaPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await requireAdmin();
   const { page } = await searchParams;
   const items = await getAllMediaItems();
 

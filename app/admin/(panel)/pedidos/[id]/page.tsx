@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrderById } from '@/lib/db';
@@ -12,6 +13,7 @@ export default async function PedidoDetallePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const order = await getOrderById(id);
   if (!order) notFound();

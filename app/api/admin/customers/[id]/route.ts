@@ -22,12 +22,15 @@ export async function PUT(
     return NextResponse.json({ error: 'Ya existe otro cliente con ese correo' }, { status: 400 });
   }
   const password = String(body.password ?? '');
+  if (password && (password.length < 12 || password.length > 256)) {
+    return NextResponse.json({ error: 'La contraseña debe tener entre 12 y 256 caracteres.' }, { status: 400 });
+  }
   const updated = await updateCustomer(Number(id), {
     nombre,
     apellido: String(body.apellido ?? '').trim(),
     email,
     telefono: String(body.telefono ?? '').trim(),
-    passwordHash: password.length >= 6 ? hashPassword(password) : undefined,
+    passwordHash: password.length >= 12 ? hashPassword(password) : undefined,
   });
   if (!updated) {
     return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 });

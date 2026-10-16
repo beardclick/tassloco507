@@ -2,7 +2,7 @@ import 'server-only';
 
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { getSupabase, STORAGE_BUCKET } from '@/lib/supabase';
+import { getSupabase, PRIVATE_STORAGE_BUCKET } from '@/lib/supabase';
 import { SITE } from '@/lib/site';
 
 export interface HomepageSettings {
@@ -150,7 +150,7 @@ export async function getHomepageSettings(): Promise<HomepageSettings> {
   if (hasSupabaseConfig()) {
     try {
       const { data, error } = await getSupabase().storage
-        .from(STORAGE_BUCKET)
+        .from(PRIVATE_STORAGE_BUCKET)
         .download(remoteSettingsPath);
       if (!error && data) return cleanSettings(JSON.parse(await data.text()) as Partial<HomepageSettings>);
     } catch {
@@ -170,7 +170,7 @@ export async function saveHomepageSettings(
 ): Promise<HomepageSettings> {
   const settings = cleanSettings(value);
   if (hasSupabaseConfig()) {
-    const { error } = await getSupabase().storage.from(STORAGE_BUCKET).upload(
+    const { error } = await getSupabase().storage.from(PRIVATE_STORAGE_BUCKET).upload(
       remoteSettingsPath,
       JSON.stringify(settings),
       { upsert: true, contentType: 'application/json', cacheControl: '0' },

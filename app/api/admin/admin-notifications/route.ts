@@ -1,21 +1,20 @@
 import { NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/auth';
-import { setNotificationDisabled } from '@/lib/notification-settings';
-import { errMsg } from '@/lib/errors';
+import { getAllAdminEmails, setNotificationDisabled } from '@/lib/notification-settings';
+import { emailField, readJsonObject, errorResponse, RequestError } from '@/lib/request-security';
 
 export async function PUT(req: Request) {
   if (!(await isAdminRequest())) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
-  const body = await req.json();
-  const email = String(body.email ?? '').trim();
-  if (!email) {
-    return NextResponse.json({ error: 'Email requerido' }, { status: 400 });
-  }
   try {
-    await setNotificationDisabled(email, Boolean(body.disabled));
+    const body = await readJsonObject(req);
+    const email = emailField(body.email);
+    if (typeof body.disabled !== 'boolean') throw new RequestError('Selecciona una preferencia válida.');
+    if (!(await getAllAdminEmails()).includes(email)) throw new RequestError('Administrador no encontrado.', 404);
+    await setNotificationDisabled(email, body.disabled);
     return NextResponse.json({ ok: true });
-  } catch (e) {
-    return NextResponse.json({ error: errMsg(e) }, { status: 500 });
+  } catch (error) {
+    return errorResponse(error);
   }
 }

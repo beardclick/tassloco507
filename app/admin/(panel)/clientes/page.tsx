@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { getCustomers, getOrders } from '@/lib/db';
 import { formatDate } from '@/lib/dates';
@@ -6,6 +7,7 @@ import { DeleteCustomerButton } from '@/components/admin/DeleteCustomerButton';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminClientes() {
+  await requireAdmin();
   const customers = await getCustomers();
   const orders = await getOrders();
 

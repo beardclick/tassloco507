@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import { currentAdminIdentity } from '@/lib/auth';
 import { getAdminByEmail } from '@/lib/db';
 import { ProfileForm } from '@/components/admin/ProfileForm';
@@ -5,6 +6,7 @@ import { ProfileForm } from '@/components/admin/ProfileForm';
 export const dynamic = 'force-dynamic';
 
 export default async function PerfilPage() {
+  await requireAdmin();
   const identity = await currentAdminIdentity();
   const dbAdmin = identity ? await getAdminByEmail(identity) : undefined;
 

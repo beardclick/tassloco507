@@ -1,3 +1,4 @@
+import { requireAdmin } from '@/lib/auth';
 import Link from 'next/link';
 import { getOrders, getProducts } from '@/lib/db';
 import { formatMoney } from '@/lib/money';
@@ -7,6 +8,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
+  await requireAdmin();
   const products = await getProducts(true);
   const orders = await getOrders();
   const pending = orders.filter((o) => o.status === 'pendiente').length;

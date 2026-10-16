@@ -69,7 +69,7 @@ export default function RegistroPage() {
         </div>
         <div className="form-field">
           <label htmlFor="r-pass">Contraseña</label>
-          <PasswordInput id="r-pass" required minLength={6} value={form.password} onChange={set('password')} />
+          <PasswordInput id="r-pass" required minLength={12} value={form.password} onChange={set('password')} />
         </div>
         <input type="text" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} className="hp-field" tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
