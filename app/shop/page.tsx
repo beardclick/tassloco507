@@ -50,8 +50,6 @@ export default async function ShopPage({
     products = [...products].sort((a, b) => moneyValue(b.prices) - moneyValue(a.prices));
   } else if (sort === 'name') {
     products = [...products].sort((a, b) => a.name.localeCompare(b.name, 'es'));
-  } else {
-    products = [...products].sort((a, b) => b.id - a.id);
   }
 
   const total = products.length;

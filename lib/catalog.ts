@@ -84,9 +84,9 @@ export const loadCategories = cache(unstable_cache(
   { revalidate: 3600, tags: ['public-catalog'] },
 ));
 
-async function catById(): Promise<Map<number, Category>> {
+const catById = cache(async (): Promise<Map<number, Category>> => {
   return new Map((await loadCategories()).map((c) => [c.id, c]));
-}
+});
 
 export async function getCategoryByPath(segments: string[]): Promise<Category | undefined> {
   const cats = await loadCategories();
@@ -119,7 +119,7 @@ export async function categoryPath(cat: Category): Promise<string> {
   return '/categoria-producto/' + (await categorySlugPath(cat)).join('/');
 }
 
-export async function categoryTree(): Promise<CategoryNode[]> {
+export const categoryTree = cache(async (): Promise<CategoryNode[]> => {
   const cats = await loadCategories();
   const map = new Map<number, CategoryNode>();
   for (const c of cats) map.set(c.id, { ...c, children: [] });
@@ -138,7 +138,7 @@ export async function categoryTree(): Promise<CategoryNode[]> {
   roots.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   for (const r of roots) sortChildren(r);
   return roots;
-}
+});
 
 export async function getCategoryChildren(cat: Category): Promise<Category[]> {
   const cats = await loadCategories();
@@ -175,8 +175,28 @@ export async function getProductsForCategory(cat: Category): Promise<Product[]> 
   return products.filter((p) => p.categories.some((c) => ids.has(c.id)));
 }
 
+// Count each product once per category, including ancestors, even when a
+// product belongs to multiple children. Reuse the totals across visits.
+const loadCategoryProductCounts = cache(unstable_cache(async () => {
+  const [products, categories] = await Promise.all([loadProducts(), loadCategories()]);
+  const parents = new Map(categories.map(category => [category.id, category.parent]));
+  const counts: Record<number, number> = {};
+  for (const product of products) {
+    const seen = new Set<number>();
+    for (const category of product.categories) {
+      let id = category.id;
+      while (id && !seen.has(id)) {
+        seen.add(id);
+        counts[id] = (counts[id] ?? 0) + 1;
+        id = parents.get(id) ?? 0;
+      }
+    }
+  }
+  return counts;
+}, ['public-category-product-counts-v1'], { revalidate: 3600, tags: ['public-catalog'] }));
+
 export async function getCategoryProductCount(cat: Category): Promise<number> {
-  return (await getProductsForCategory(cat)).length;
+  return (await loadCategoryProductCounts())[cat.id] ?? 0;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
