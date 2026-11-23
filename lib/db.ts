@@ -1,7 +1,7 @@
 import { getSupabase } from './supabase';
 import type { Category, Product, ProductCategory, Prices } from './catalog';
 import type { OrderStatus } from './order';
-import { getProductMetaMap, removeProductMeta, setProductMeta } from './product-meta';
+import { getPublicProductMetaMap, removeProductMeta, setProductMeta } from './product-meta';
 import { isAuthorizedAuthAdmin } from './supabase-admin-auth';
 import { revokeSubjectSessions } from './sessions';
 
@@ -300,7 +300,7 @@ export async function deleteCategory(id: number): Promise<boolean> {
 export async function getProducts(includeDrafts = false): Promise<Product[]> {
   const { data, error } = await sb().from('products').select('*').order('id', { ascending: false });
   if (error) throw error;
-  const meta = await getProductMetaMap();
+  const meta = await getPublicProductMetaMap();
   const products = ((data ?? []) as Product[]).map((product) => ({
     ...normalizeProductText(product),
     draft: meta[String(product.id)]?.draft ?? false,
@@ -315,7 +315,7 @@ export async function getProductById(id: number): Promise<Product | undefined> {
   const { data, error } = await sb().from('products').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!data) return undefined;
-  const meta = await getProductMetaMap();
+  const meta = await getPublicProductMetaMap();
   return {
     ...normalizeProductText(data as Product),
     draft: meta[String(id)]?.draft ?? false,
@@ -330,7 +330,7 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
   if (error) throw error;
   if (!data) return undefined;
   const product = normalizeProductText(data as Product);
-  const meta = await getProductMetaMap();
+  const meta = await getPublicProductMetaMap();
   if (meta[String(product.id)]?.draft) return undefined;
   return {
     ...product,

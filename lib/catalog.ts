@@ -72,16 +72,17 @@ export interface CategoryNode extends Category {
 
 // Caché persistente entre visitas y memoización dentro de cada renderizado.
 // El admin invalida public-catalog después de editar productos o categorías.
+export const PUBLIC_REVALIDATE = 86400;
 export const loadProducts = cache(unstable_cache(
   async (): Promise<Product[]> => dbGetProducts(),
   ['public-products-v2-private-settings'],
-  { revalidate: 3600, tags: ['public-catalog'] },
+  { revalidate: PUBLIC_REVALIDATE, tags: ['public-catalog'] },
 ));
 
 export const loadCategories = cache(unstable_cache(
   async (): Promise<Category[]> => dbGetCategories(),
   ['public-categories'],
-  { revalidate: 3600, tags: ['public-catalog'] },
+  { revalidate: PUBLIC_REVALIDATE, tags: ['public-catalog'] },
 ));
 
 const catById = cache(async (): Promise<Map<number, Category>> => {
@@ -193,32 +194,57 @@ const loadCategoryProductCounts = cache(unstable_cache(async () => {
     }
   }
   return counts;
-}, ['public-category-product-counts-v1'], { revalidate: 3600, tags: ['public-catalog'] }));
+}, ['public-category-product-counts-v1'], { revalidate: PUBLIC_REVALIDATE, tags: ['public-catalog'] }));
 
 export async function getCategoryProductCount(cat: Category): Promise<number> {
   return (await loadCategoryProductCounts())[cat.id] ?? 0;
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+export const getProductBySlug = cache(async (slug: string): Promise<Product | undefined> => {
   // Consulta directa por slug (usa el índice), en lugar de traer todos los productos.
+  // cache() evita repetir la consulta cuando generateMetadata y la página piden lo mismo.
   return dbGetProductBySlug(slug);
-}
+});
+
+// Productos relacionados precalculados una vez por caché, en lugar de ordenar
+// los 322 productos en cada render de página de producto.
+const loadRelatedSlugs = cache(unstable_cache(async (): Promise<Record<string, number[]>> => {
+  const products = await loadProducts();
+  const index: Record<string, number[]> = {};
+  for (const product of products) {
+    const catIds = new Set(product.categories.map((c) => c.id));
+    const tags = new Set(product.tags);
+    index[product.slug] = products
+      .filter((p) => p.id !== product.id)
+      .map((p) => {
+        let score = 0;
+        if (p.categories.some((c) => catIds.has(c.id))) score += 2;
+        if (p.tags.some((t) => tags.has(t))) score += 1;
+        if (p.images.length > 0) score += 1;
+        return { id: p.id, score };
+      })
+      .sort((a, b) => b.score - a.score || b.id - a.id)
+      .slice(0, 8)
+      .map((s) => s.id);
+  }
+  return index;
+}, ['public-related-products-v1'], { revalidate: PUBLIC_REVALIDATE, tags: ['public-catalog'] }));
 
 export async function getRelatedProducts(product: Product, limit = 4): Promise<Product[]> {
-  const all = await loadProducts();
-  const catIds = new Set(product.categories.map((c) => c.id));
-  const scored = all
-    .filter((p) => p.slug !== product.slug)
-    .map((p) => {
-      let score = 0;
-      if (p.categories.some((c) => catIds.has(c.id))) score += 2;
-      const tags = new Set(product.tags);
-      if (p.tags.some((t) => tags.has(t))) score += 1;
-      if (p.images.length > 0) score += 1;
-      return { p, score };
-    })
-    .sort((a, b) => b.score - a.score || b.p.id - a.p.id);
-  return scored.slice(0, limit).map((s) => s.p);
+  const [index, all] = await Promise.all([loadRelatedSlugs(), loadProducts()]);
+  const byId = new Map(all.map((p) => [p.id, p]));
+  const ids = index[product.slug];
+  if (!ids) {
+    // Producto recién creado que aún no está en el índice cacheado.
+    return all
+      .filter((p) => p.slug !== product.slug && p.images.length > 0)
+      .sort((a, b) => b.id - a.id)
+      .slice(0, limit);
+  }
+  return ids
+    .map((id) => byId.get(id))
+    .filter((p): p is Product => Boolean(p))
+    .slice(0, limit);
 }
 
 export async function productsWithImages(): Promise<Product[]> {

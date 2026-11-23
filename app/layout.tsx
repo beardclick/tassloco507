@@ -34,8 +34,8 @@ const archivo = Archivo({
   display: 'swap',
 });
 
-// Las páginas públicas se regeneran como respaldo una vez por hora.
-export const revalidate = 3600;
+// Las páginas públicas se regeneran como respaldo una vez al día.
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),

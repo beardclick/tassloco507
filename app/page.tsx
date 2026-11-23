@@ -13,7 +13,7 @@ import { SITE } from '@/lib/site';
 import { getHomepageSettings } from '@/lib/homepage-settings';
 
 export const dynamic = 'force-static';
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export default async function HomePage() {
   const homepage = await getHomepageSettings();
